@@ -15,26 +15,23 @@ function updateDashboardUI(metrics) {
     document.getElementById('press-val').innerText = `${formatMetric(metrics.pressure, 1)} hPa`;
     document.getElementById('wind-val').innerText = `${formatMetric(metrics.wind_speed, 1)} MPH`;
     document.getElementById('dir-val').innerText = metrics.wind_dir || "--";
-    document.getElementById('rain-val').innerText = `${formatMetric(metrics.rain_fall, 3)} in`;
+    document.getElementById('rain-5min-val').innerText = `${formatMetric(metrics.rain_last_5_min, 3)} in`;
+    document.getElementById('rain-today-val').innerText = `${formatMetric(metrics.rain_total_today, 3)} in`;
 }
 
-// Clear, direct API request function
+// Clear, direct high-speed polling request
 async function checkLiveWeatherData() {
     try {
-        // Appending a random cache-busting timestamp query to guarantee the browser gets fresh data
         const response = await fetch(`${FIREBASE_DB_URL}current_reading.json?nocache=${Date.now()}`);
         const currentData = await response.json();
         if (currentData) {
             updateDashboardUI(currentData);
         }
     } catch (error) {
-        console.error("Firebase cloud link dropped or failed:", error);
+        console.error("Firebase cloud pull dropped:", error);
     }
 }
 
-// 1. Run the data fetch immediately the absolute millisecond the webpage boots
+// Fire immediately on load, then loop every 3 seconds to capture live radio shifts
 checkLiveWeatherData();
-
-// 2. Automatically repeat the direct fetch request every 3 seconds to capture live radio ticks
 setInterval(checkLiveWeatherData, 3000);
-
