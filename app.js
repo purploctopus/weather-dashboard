@@ -12,7 +12,8 @@ function updateDashboardUI(metrics) {
     
     document.getElementById('temp-val').innerText = `${formatMetric(metrics.temperature, 1)} °F`;
     document.getElementById('humid-val').innerText = `${formatMetric(metrics.humidity, 1)} %`;
-    document.getElementById('press-val').innerText = `${formatMetric(metrics.pressure, 1)} hPa`;
+    const pressureInHg = data.pressure * 0.02953;
+    document.getElementById('press-val').innerText = `${pressureInHg.toFixed(2)} inHg`;
     document.getElementById('wind-val').innerText = `${formatMetric(metrics.wind_speed, 1)} MPH`;
     document.getElementById('dir-val').innerText = metrics.wind_dir || "--";
     document.getElementById('rain-5min-val').innerText = `${formatMetric(metrics.rain_last_5_min, 3)} in`;
