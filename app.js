@@ -6,14 +6,16 @@ function formatMetric(value, decimals, fallback = "--") {
     return isNaN(num) ? value : num.toFixed(decimals);
 }
 
-// Master interface injector map
+// Master interface injector map matching your exact Firebase console keys
 function updateDashboardUI(metrics) {
     if (!metrics) return;
     
+    // Convert hPa to standard US Inches of Mercury (inHg) formatted to 2 decimals
+    const pressureInHg = metrics.pressure * 0.0295301;
+    
     document.getElementById('temp-val').innerText = `${formatMetric(metrics.temperature, 1)} °F`;
     document.getElementById('humid-val').innerText = `${formatMetric(metrics.humidity, 1)} %`;
-    const pressureInHg = data.pressure * 0.02953;
-    document.getElementById('press-val').innerText = `${pressureInHg.toFixed(2)} inHg`;
+    document.getElementById('press-val').innerText = `${formatMetric(pressureInHg, 2)} inHg`;
     document.getElementById('wind-val').innerText = `${formatMetric(metrics.wind_speed, 1)} MPH`;
     document.getElementById('dir-val').innerText = metrics.wind_dir || "--";
     document.getElementById('rain-5min-val').innerText = `${formatMetric(metrics.rain_last_5_min, 3)} in`;
