@@ -1,4 +1,3 @@
-// Replace with your exact Firebase database URL string (leave the trailing slash)
 const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebaseio.com/";
 
 function formatMetric(value, decimals, fallback = "--") {
@@ -19,34 +18,23 @@ function updateDashboardUI(metrics) {
     document.getElementById('rain-val').innerText = `${formatMetric(metrics.rain_fall, 3)} in`;
 }
 
-// 1. Fetch direct snapshot immediately on boot to handle instant loading
-async function loadInstantBaseline() {
+// Clear, direct API request function
+async function checkLiveWeatherData() {
     try {
-        const response = await fetch(`${FIREBASE_DB_URL}current_reading.json`);
-        const initialData = await response.json();
-        if (initialData) {
-            updateDashboardUI(initialData);
+        // Appending a random cache-busting timestamp query to guarantee the browser gets fresh data
+        const response = await fetch(`${FIREBASE_DB_URL}current_reading.json?nocache=${Date.now()}`);
+        const currentData = await response.json();
+        if (currentData) {
+            updateDashboardUI(currentData);
         }
     } catch (error) {
-        console.error("Baseline fetch failed:", error);
+        console.error("Firebase cloud link dropped or failed:", error);
     }
 }
-loadInstantBaseline();
 
-// 2. Open the streaming connection and correctly extract the nested data updates
-const eventSource = new EventSource(`${FIREBASE_DB_URL}current_reading.json`);
-eventSource.onmessage = function(event) {
-    try {
-        const payload = JSON.parse(event.data);
-        if (!payload) return;
+// 1. Run the data fetch immediately the absolute millisecond the webpage boots
+checkLiveWeatherData();
 
-        // Firebase EventSource puts the actual metrics inside the 'data' field of the stream wrapper
-        if (payload.data) {
-            updateDashboardUI(payload.data);
-        } else if (payload.path === "/" && payload.data === null) {
-            console.log("Waiting for fresh database write ticker...");
-        }
-    } catch (err) {
-        console.error("Stream parsing block error:", err);
-    }
-};
+// 2. Automatically repeat the direct fetch request every 3 seconds to capture live radio ticks
+setInterval(checkLiveWeatherData, 3000);
+
