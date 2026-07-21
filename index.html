@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garden Weather Base Station</title>
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #ffffff; margin: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #333; }
+        .value { font-size: 2rem; font-weight: bold; margin-top: 10px; color: #00ffcc; }
+        .chart-container { background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>🏠 Garden Weather Base Station</h1>
+    <div class="grid">
+        <div class="card"><div>Temperature</div><div class="value" id="temp-val">-- °F</div></div>
+        <div class="card"><div>Humidity</div><div class="value" id="humid-val">-- %</div></div>
+        <div class="card"><div>Wind Speed</div><div class="value" id="wind-val">-- MPH</div></div>
+        <div class="card"><div>Rainfall</div><div class="value" id="rain-val">-- in</div></div>
+    </div>
+    <div class="chart-container">
+        <div id="temp-chart"></div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
+
