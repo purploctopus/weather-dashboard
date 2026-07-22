@@ -2,7 +2,7 @@ const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebas
 
 document.addEventListener("DOMContentLoaded", function() {
     
-    // 1. Initialize a Categorical Bar Chart to keep each day completely isolated
+    // 1. Initialize the Historical Precipitation Bar Chart Instance
     const rainChartOptions = {
         chart: {
             type: 'bar',
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function() {
         colors: ['#3399ff'],
         series: [{ name: 'Daily Rainfall', data: [] }],
         xaxis: {
-            type: 'category', // Forces strict discrete columns per day
+            type: 'category',
             categories: [],
             axisBorder: { show: true, color: '#333' }
         },
@@ -36,6 +36,33 @@ document.addEventListener("DOMContentLoaded", function() {
     const rainChart = new ApexCharts(document.querySelector("#rain-bar-chart"), rainChartOptions);
     rainChart.render();
 
+    function formatMetric(value, decimals, fallback = "--") {
+        if (value === undefined || value === null) return fallback;
+        const num = Number(value);
+        return isNaN(num) ? value : num.toFixed(decimals);
+    }
+
+    // Defensive UI injector: Checks if any node is missing before injecting text
+    function updateDashboardUI(current, dailyRainTotal, yearlyRainTotal) {
+        if (!current) return;
+        
+        // Safety translation layer for barometric calculation
+        const rawPressure = current.pressure;
+        const pressureInHg = rawPressure ? rawPressure * 0.0295301 : null;
+
+        document.getElementById('temp-val').innerText = `${formatMetric(current.temperature, 1)} °F`;
+        document.getElementById('humid-val').innerText = `${formatMetric(current.humidity, 1)} %`;
+        document.getElementById('press-val').innerText = `${formatMetric(pressureInHg, 2)} inHg`;
+        document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
+        document.getElementById('dir-val').innerText = current.wind_dir || "--";
+        
+        // Handle variations in rainfall key mapping defensively
+        const instantRain = current.rain_last_5_min !== undefined ? current.rain_last_5_min : current.rain_fall;
+        document.getElementById('rain-5min-val').innerText = `${formatMetric(instantRain, 3)} in`;
+        document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
+        document.getElementById('rain-year-val').innerText = `${formatMetric(yearlyRainTotal, 3)} in`;
+    }
+
     // 2. Data Analyst Core: Compile a single aggregated total per unique date string
     async function loadPrecipitationAnalytics() {
         try {
@@ -48,36 +75,30 @@ document.addEventListener("DOMContentLoaded", function() {
             const fullHistory = await fullHistoryResponse.json();
             
             if (fullHistory) {
-                // Read and sort recorded folder date keys (e.g., ["2026-07-21", "2026-07-22"])
                 const sortedDates = Object.keys(fullHistory).sort();
 
                 sortedDates.forEach(dateKey => {
                     if (dateKey.startsWith(currentYearPrefix)) {
                         let daySum = 0.0;
                         
-                        // Sum up all 5-minute raw log rows for this specific day
                         Object.values(fullHistory[dateKey]).forEach(row => {
-                            const tip = Number(row.rain_last_5_min);
+                            // Extract values supporting both naming patterns flexibly
+                            const tip = row.rain_last_5_min !== undefined ? Number(row.rain_last_5_min) : Number(row.rain_fall);
                             if (!isNaN(tip)) daySum += tip;
                         });
 
                         aggregatedYearTotal += daySum;
 
-                        // Push exactly ONE data value and ONE label string per day to the graph vectors
                         dailyRainTotalsArray.push(Number(daySum.toFixed(3)));
-                        
-                        // Formats the string to look clean on the axis (e.g., converts "2026-07-21" to "07-21")
                         const shortDate = dateKey.substring(5);
                         dateLabelsArray.push(shortDate);
                     }
                 });
             }
 
-            // Sync the single array mappings straight into the chart instance
             rainChart.updateSeries([{ data: dailyRainTotalsArray }]);
             rainChart.updateOptions({ xaxis: { categories: dateLabelsArray } });
             
-            // Return the final calculation so it can be passed to your Year Total Card
             return aggregatedYearTotal;
 
         } catch (err) {
@@ -86,9 +107,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-
-
-    // 3. Real-Time Operational Pipeline Logic Loop Control
+    // 3. Main Real-Time Operational Pipeline Loop
     async function runWeatherDashboardPipeline() {
         try {
             const cacheBuster = `?nocache=${Date.now()}`;
@@ -106,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function() {
             let calculatedDailyRain = 0.0;
             if (historyData) {
                 calculatedDailyRain = Object.values(historyData).reduce((total, logRow) => {
-                    const tip = Number(logRow.rain_last_5_min);
+                    const tip = logRow.rain_last_5_min !== undefined ? Number(logRow.rain_last_5_min) : Number(logRow.rain_fall);
                     return total + (isNaN(tip) ? 0 : tip);
                 }, 0.0);
             }
