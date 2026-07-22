@@ -18,31 +18,39 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // 2. Initialize High-Resolution 5-Minute Temperature Timeline Chart
     const tempChartOptions = {
-        chart: {
-            type: 'area',
-            height: 300,
-            toolbar: { show: true },
-            background: '#1e1e1e',
-            animations: { enabled: false }
-        },
-        theme: { mode: 'dark' },
-        colors: ['#00ffcc'],
-        series: [{ name: 'Temperature', data: [] }],
-        xaxis: {
-            type: 'datetime',
-            labels: {
-                datetimeUTC: false,
-                format: 'hh:mm TT' // Displays your local clock markers (e.g. 08:35 AM)
-            },
-            axisBorder: { show: true, color: '#333' }
-        },
-        stroke: { curve: 'smooth', width: 3 },
-        dataLabels: { enabled: false },
+        chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
+        theme: { mode: 'dark' }, colors: ['#00ffcc'], series: [{ name: 'Temperature', data: [] }],
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
+        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
         tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} °F` } }
     };
     const tempChart = new ApexCharts(document.querySelector("#temp-timeline-chart"), tempChartOptions);
     tempChart.render();
+
+    // NEW: 3. Initialize High-Resolution 5-Minute Barometric Pressure Timeline Chart
+    const pressChartOptions = {
+        chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
+        theme: { mode: 'dark' }, colors: ['#ff9900'], series: [{ name: 'Pressure', data: [] }],
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
+        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
+        tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(2)} inHg` } }
+    };
+    const pressChart = new ApexCharts(document.querySelector("#press-timeline-chart"), pressChartOptions);
+    pressChart.render();
+
+    // NEW: 4. Initialize High-Resolution 5-Minute Humidity Timeline Chart
+    const humidChartOptions = {
+        chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
+        theme: { mode: 'dark' }, colors: ['#b366ff'], series: [{ name: 'Humidity', data: [] }],
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
+        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
+        tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} %` } }
+    };
+    const humidChart = new ApexCharts(document.querySelector("#humid-timeline-chart"), humidChartOptions);
+    humidChart.render();
 
     function formatMetric(value, decimals, fallback = "--") {
         if (value === undefined || value === null) return fallback;
@@ -66,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('rain-year-val').innerText = `${formatMetric(yearlyRainTotal, 3)} in`;
     }
 
-    // 3. Historical Precipitation Matrix Parser
+    // 5. Precipitation Database Mining Loop
     async function loadPrecipitationAnalytics() {
         try {
             const dailyRainTotalsArray = [];
@@ -102,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // 4. Main Real-Time Operational Pipeline Loop
+    // 6. Main Real-Time Operational Pipeline Loop
     async function runWeatherDashboardPipeline() {
         try {
             const cacheBuster = `?nocache=${Date.now()}`;
@@ -122,29 +130,38 @@ document.addEventListener("DOMContentLoaded", function() {
 
             let calculatedDailyRain = 0.0;
             const tempTimelinePoints = [];
+            const pressTimelinePoints = [];
+            const humidTimelinePoints = [];
 
             if (historyData) {
-                // Read every individual 5-minute timestamp log node recorded today
                 Object.entries(historyData).forEach(([timeKey, logRow]) => {
                     const tip = logRow.rain_last_5_min !== undefined ? Number(logRow.rain_last_5_min) : Number(logRow.rain_fall);
                     calculatedDailyRain += (isNaN(tip) ? 0 : tip);
 
+                    // Parse text time key coordinates cleanly (HHMMSS) into local epoch millisecond formats
+                    const hh = parseInt(timeKey.substring(0, 2), 10);
+                    const mm = parseInt(timeKey.substring(2, 4), 10);
+                    const ss = parseInt(timeKey.substring(4, 6), 10);
+                    const preciseLocalTimestamp = new Date(yearStr, localDate.getMonth(), dayStr, hh, mm, ss).getTime();
+
+                    // Extract Temperature Data Point
                     const temp = Number(logRow.temperature);
-                    if (!isNaN(temp)) {
-                        // Isolate hour, minute, and second segments from the 6-character text sub-key (HHMMSS)
-                        const hh = parseInt(timeKey.substring(0, 2), 10);
-                        const mm = parseInt(timeKey.substring(2, 4), 10);
-                        const ss = parseInt(timeKey.substring(4, 6), 10);
-                        
-                        // Formats the points explicitly into a local midnight timeline coordinate map
-                        const preciseLocalTimestamp = new Date(yearStr, localDate.getMonth(), dayStr, hh, mm, ss).getTime();
-                        tempTimelinePoints.push([preciseLocalTimestamp, temp]);
-                    }
+                    if (!isNaN(temp)) tempTimelinePoints.push([preciseLocalTimestamp, temp]);
+
+                    // Extract Pressure Data Point (Converts hPa to standard US inHg formatting)
+                    const press = Number(logRow.pressure);
+                    if (!isNaN(press)) pressTimelinePoints.push([preciseLocalTimestamp, press * 0.0295301]);
+
+                    // Extract Humidity Data Point
+                    const humid = Number(logRow.humidity);
+                    if (!isNaN(humid)) humidTimelinePoints.push([preciseLocalTimestamp, humid]);
                 });
             }
 
-            // Sync high-resolution 5-minute points straight onto the new graph axis grid
+            // Sync all high-resolution 5-minute arrays to their respective graph canvas elements simultaneously
             tempChart.updateSeries([{ data: tempTimelinePoints }]);
+            pressChart.updateSeries([{ data: pressTimelinePoints }]);
+            humidChart.updateSeries([{ data: humidTimelinePoints }]);
 
             const calculatedYearlyRain = await loadPrecipitationAnalytics();
             updateDashboardUI(currentData, calculatedDailyRain, calculatedYearlyRain);
