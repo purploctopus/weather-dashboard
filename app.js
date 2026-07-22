@@ -1,17 +1,18 @@
 const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebaseio.com/";
 
-// Wait for the browser to draw all HTML containers before running any chart logic
 document.addEventListener("DOMContentLoaded", function() {
     
-    // 1. Initialize the Historical Precipitation Bar Chart Instance
+    // 1. Initialize a Time-Series Area Chart designed for year-long tracking arrays
     const rainChartOptions = {
-        chart: { type: 'bar', height: 300, toolbar: { show: false }, background: '#1e1e1e' },
+        chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e' },
         theme: { mode: 'dark' },
         colors: ['#3399ff'],
-        series: [{ name: 'Daily Rain', data: [] }], // <-- FIX: Ensure empty array is present
-        xaxis: { categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
-        plotOptions: { bar: { borderRadius: 4, dataLabels: { position: 'top' } } },
-        dataLabels: { enabled: true, formatter: (val) => `${val.toFixed(2)} in`, style: { colors: ['#fff'] } }
+        series: [{ name: 'Daily Rainfall', data: [] }],
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false } },
+        stroke: { curve: 'smooth', width: 2 },
+        dataLabels: { enabled: false }, // Disabled for clutter protection over 365 points
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
+        tooltip: { x: { format: 'MMM dd, yyyy' }, y: { formatter: (val) => `${val.toFixed(3)} in` } }
     };
     const rainChart = new ApexCharts(document.querySelector("#rain-bar-chart"), rainChartOptions);
     rainChart.render();
@@ -32,61 +33,49 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
         document.getElementById('dir-val').innerText = current.wind_dir || "--";
         
-        // Injecting Precipitation Module Parameters
         document.getElementById('rain-5min-val').innerText = `${formatMetric(current.rain_last_5_min, 3)} in`;
         document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
         document.getElementById('rain-year-val').innerText = `${formatMetric(yearlyRainTotal, 3)} in`;
     }
 
-    // 2. Data Analyst Core: Mine deep database logs to calculate Year and Week values
+    // 2. Data Analyst Core: Pull full directory history tree and isolate the current year
     async function loadPrecipitationAnalytics() {
         try {
-            const last7DaysData = [];
-            const labelDates = [];
+            const yearlyTimelinePoints = [];
             let aggregatedYearTotal = 0.0;
-            
-            // Loop over past 7 calendar dates for chart values
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                
-                const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
-                labelDates.push(dayLabel);
+            const currentYearPrefix = new Date().getFullYear().toString();
 
-                const res = await fetch(`${FIREBASE_DB_URL}history/${dateStr}.json`);
-                const historyNode = await res.json();
-                
-                let daySum = 0.0;
-                if (historyNode) {
-                    daySum = Object.values(historyNode).reduce((total, row) => {
-                        const tip = Number(row.rain_last_5_min);
-                        return total + (isNaN(tip) ? 0 : tip);
-                    }, 0.0);
-                }
-                last7DaysData.push(daySum);
-            }
-
-            // Fetch the global history folder to calculate the absolute Year Total on the fly
+            // Fetch the comprehensive background database log history tree
             const fullHistoryResponse = await fetch(`${FIREBASE_DB_URL}history.json`);
             const fullHistory = await fullHistoryResponse.json();
             
             if (fullHistory) {
-                // Loop through every date folder logged in your database history tree
-                Object.keys(fullHistory).forEach(dateKey => {
-                    const currentYearPrefix = new Date().getFullYear().toString();
-                    if (dateKey.startsWith(currentYearPrefix)) { // Only count logs for the current year
+                // Read and sort all recorded date folder keys chronologically
+                const sortedDates = Object.keys(fullHistory).sort();
+
+                sortedDates.forEach(dateKey => {
+                    // Process historical node strings matching the active calendar year folder prefix
+                    if (dateKey.startsWith(currentYearPrefix)) {
+                        let daySum = 0.0;
+                        
+                        // Sum up all 5-minute ticks recorded on this specific date
                         Object.values(fullHistory[dateKey]).forEach(row => {
                             const tip = Number(row.rain_last_5_min);
-                            if (!isNaN(tip)) aggregatedYearTotal += tip;
+                            if (!isNaN(tip)) daySum += tip;
                         });
+
+                        // Accumulate into the total year scale record register
+                        aggregatedYearTotal += daySum;
+
+                        // Create an ApexCharts time-series object point: [Timestamp (ms), Calculated Value]
+                        const dateTimestamp = new Date(`${dateKey}T00:00:00`).getTime();
+                        yearlyTimelinePoints.push([dateTimestamp, daySum]);
                     }
                 });
             }
 
-            // Render weekly array bars onto the canvas map [Ref: 1.3.7]
-            rainChart.updateSeries([{ data: last7DaysData }]);
-            rainChart.updateOptions({ xaxis: { categories: labelDates } });
+            // Sync the entire timeline dataset array straight to the graph canvas
+            rainChart.updateSeries([{ data: yearlyTimelinePoints }]);
             
             return aggregatedYearTotal;
 
@@ -96,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // 3. Main Real-Time Operational Pipeline Loop
+    // 3. Real-Time Operational Pipeline Logic Loop Control
     async function runWeatherDashboardPipeline() {
         try {
             const cacheBuster = `?nocache=${Date.now()}`;
@@ -119,10 +108,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }, 0.0);
             }
 
-            // Run historical calculations and return year totals
             const calculatedYearlyRain = await loadPrecipitationAnalytics();
-
-            // Push calculations straight down to text templates
             updateDashboardUI(currentData, calculatedDailyRain, calculatedYearlyRain);
 
         } catch (error) {
@@ -130,7 +116,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Initialize immediate execution loops on document verification
     runWeatherDashboardPipeline();
     setInterval(runWeatherDashboardPipeline, 4000);
 });
