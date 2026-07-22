@@ -4,37 +4,45 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // 1. Initialize the Historical Precipitation Bar Chart Instance
     const rainChartOptions = {
-        chart: {
-            type: 'bar',
-            height: 300,
-            toolbar: { show: true },
-            background: '#1e1e1e'
-        },
+        chart: { type: 'bar', height: 300, toolbar: { show: true }, background: '#1e1e1e' },
         theme: { mode: 'dark' },
         colors: ['#3399ff'],
         series: [{ name: 'Daily Rainfall', data: [] }],
-        xaxis: {
-            type: 'category',
-            categories: [],
-            axisBorder: { show: true, color: '#333' }
-        },
-        plotOptions: {
-            bar: {
-                borderRadius: 4,
-                columnWidth: '40%',
-                dataLabels: { position: 'top' }
-            }
-        },
-        dataLabels: {
-            enabled: true,
-            formatter: (val) => `${val.toFixed(3)} in`,
-            style: { colors: ['#fff'], fontSize: '11px' },
-            offsetY: -20
-        },
+        xaxis: { type: 'category', categories: [], axisBorder: { show: true, color: '#333' } },
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '40%', dataLabels: { position: 'top' } } },
+        dataLabels: { enabled: true, formatter: (val) => `${val.toFixed(3)} in`, style: { colors: ['#fff'], fontSize: '11px' }, offsetY: -20 },
         tooltip: { y: { formatter: (val) => `${val.toFixed(3)} in` } }
     };
     const rainChart = new ApexCharts(document.querySelector("#rain-bar-chart"), rainChartOptions);
     rainChart.render();
+
+    // 2. Initialize High-Resolution 5-Minute Temperature Timeline Chart
+    const tempChartOptions = {
+        chart: {
+            type: 'area',
+            height: 300,
+            toolbar: { show: true },
+            background: '#1e1e1e',
+            animations: { enabled: false }
+        },
+        theme: { mode: 'dark' },
+        colors: ['#00ffcc'],
+        series: [{ name: 'Temperature', data: [] }],
+        xaxis: {
+            type: 'datetime',
+            labels: {
+                datetimeUTC: false,
+                format: 'hh:mm TT' // Displays your local clock markers (e.g. 08:35 AM)
+            },
+            axisBorder: { show: true, color: '#333' }
+        },
+        stroke: { curve: 'smooth', width: 3 },
+        dataLabels: { enabled: false },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
+        tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} °F` } }
+    };
+    const tempChart = new ApexCharts(document.querySelector("#temp-timeline-chart"), tempChartOptions);
+    tempChart.render();
 
     function formatMetric(value, decimals, fallback = "--") {
         if (value === undefined || value === null) return fallback;
@@ -42,13 +50,9 @@ document.addEventListener("DOMContentLoaded", function() {
         return isNaN(num) ? value : num.toFixed(decimals);
     }
 
-    // Defensive UI injector: Checks if any node is missing before injecting text
     function updateDashboardUI(current, dailyRainTotal, yearlyRainTotal) {
         if (!current) return;
-        
-        // Safety translation layer for barometric calculation
-        const rawPressure = current.pressure;
-        const pressureInHg = rawPressure ? rawPressure * 0.0295301 : null;
+        const pressureInHg = current.pressure ? current.pressure * 0.0295301 : null;
 
         document.getElementById('temp-val').innerText = `${formatMetric(current.temperature, 1)} °F`;
         document.getElementById('humid-val').innerText = `${formatMetric(current.humidity, 1)} %`;
@@ -56,14 +60,13 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
         document.getElementById('dir-val').innerText = current.wind_dir || "--";
         
-        // Handle variations in rainfall key mapping defensively
         const instantRain = current.rain_last_5_min !== undefined ? current.rain_last_5_min : current.rain_fall;
         document.getElementById('rain-5min-val').innerText = `${formatMetric(instantRain, 3)} in`;
         document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
         document.getElementById('rain-year-val').innerText = `${formatMetric(yearlyRainTotal, 3)} in`;
     }
 
-    // 2. Data Analyst Core: Compile a single aggregated total per unique date string
+    // 3. Historical Precipitation Matrix Parser
     async function loadPrecipitationAnalytics() {
         try {
             const dailyRainTotalsArray = [];
@@ -76,38 +79,30 @@ document.addEventListener("DOMContentLoaded", function() {
             
             if (fullHistory) {
                 const sortedDates = Object.keys(fullHistory).sort();
-
                 sortedDates.forEach(dateKey => {
                     if (dateKey.startsWith(currentYearPrefix)) {
                         let daySum = 0.0;
-                        
                         Object.values(fullHistory[dateKey]).forEach(row => {
-                            // Extract values supporting both naming patterns flexibly
                             const tip = row.rain_last_5_min !== undefined ? Number(row.rain_last_5_min) : Number(row.rain_fall);
                             if (!isNaN(tip)) daySum += tip;
                         });
-
                         aggregatedYearTotal += daySum;
-
                         dailyRainTotalsArray.push(Number(daySum.toFixed(3)));
                         const shortDate = dateKey.substring(5);
                         dateLabelsArray.push(shortDate);
                     }
                 });
             }
-
             rainChart.updateSeries([{ data: dailyRainTotalsArray }]);
             rainChart.updateOptions({ xaxis: { categories: dateLabelsArray } });
-            
             return aggregatedYearTotal;
-
         } catch (err) {
             console.error("Analytical calculation failure:", err);
             return 0.0;
         }
     }
 
-    // 3. Main Real-Time Operational Pipeline Loop
+    // 4. Main Real-Time Operational Pipeline Loop
     async function runWeatherDashboardPipeline() {
         try {
             const cacheBuster = `?nocache=${Date.now()}`;
@@ -117,18 +112,39 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!currentData) return;
 
             const localDate = new Date();
-            const todayFolderKey = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+            const yearStr = localDate.getFullYear();
+            const monthStr = String(localDate.getMonth() + 1).padStart(2, '0');
+            const dayStr = String(localDate.getDate()).padStart(2, '0');
+            const todayFolderKey = `${yearStr}-${monthStr}-${dayStr}`;
 
             const historyResponse = await fetch(`${FIREBASE_DB_URL}history/${todayFolderKey}.json${cacheBuster}`);
             const historyData = await historyResponse.json();
 
             let calculatedDailyRain = 0.0;
+            const tempTimelinePoints = [];
+
             if (historyData) {
-                calculatedDailyRain = Object.values(historyData).reduce((total, logRow) => {
+                // Read every individual 5-minute timestamp log node recorded today
+                Object.entries(historyData).forEach(([timeKey, logRow]) => {
                     const tip = logRow.rain_last_5_min !== undefined ? Number(logRow.rain_last_5_min) : Number(logRow.rain_fall);
-                    return total + (isNaN(tip) ? 0 : tip);
-                }, 0.0);
+                    calculatedDailyRain += (isNaN(tip) ? 0 : tip);
+
+                    const temp = Number(logRow.temperature);
+                    if (!isNaN(temp)) {
+                        // Isolate hour, minute, and second segments from the 6-character text sub-key (HHMMSS)
+                        const hh = parseInt(timeKey.substring(0, 2), 10);
+                        const mm = parseInt(timeKey.substring(2, 4), 10);
+                        const ss = parseInt(timeKey.substring(4, 6), 10);
+                        
+                        // Formats the points explicitly into a local midnight timeline coordinate map
+                        const preciseLocalTimestamp = new Date(yearStr, localDate.getMonth(), dayStr, hh, mm, ss).getTime();
+                        tempTimelinePoints.push([preciseLocalTimestamp, temp]);
+                    }
+                });
             }
+
+            // Sync high-resolution 5-minute points straight onto the new graph axis grid
+            tempChart.updateSeries([{ data: tempTimelinePoints }]);
 
             const calculatedYearlyRain = await loadPrecipitationAnalytics();
             updateDashboardUI(currentData, calculatedDailyRain, calculatedYearlyRain);
