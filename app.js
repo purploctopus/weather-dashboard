@@ -171,6 +171,8 @@ document.addEventListener("DOMContentLoaded", function() {
             const tempTimelinePoints = [];
             const pressTimelinePoints = [];
             const humidTimelinePoints = [];
+            const windSpeedTimelinePoints = [];
+            const windDirTimelinePoints = [];
 
             if (historyData) {
                 Object.entries(historyData).forEach(([timeKey, logRow]) => {
@@ -194,6 +196,22 @@ document.addEventListener("DOMContentLoaded", function() {
                     // Extract Humidity Data Point
                     const humid = Number(logRow.humidity);
                     if (!isNaN(humid)) humidTimelinePoints.push([preciseLocalTimestamp, humid]);
+                    
+                    // Isolate Wind Speed using your exact lowercase database key
+                    const speed = Number(logRow.wind_speed);
+                    if (!isNaN(speed)) {
+                        windSpeedTimelinePoints.push([preciseLocalTimestamp, speed]);
+                    }
+
+                    // Isolate Wind Direction and map it to its corresponding Y-axis index slot
+                    const direction = logRow.wind_dir; // Targets exact database schema key
+                    const compassMap = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                    const dirIndex = compassMap.indexOf(direction);
+                    
+                    if (dirIndex !== -1) {
+                        // Coordinates: [Timestamp (ms), Y-Axis Index position row (0 through 7)]
+                        windDirTimelinePoints.push([preciseLocalTimestamp, dirIndex]);
+                    }
                 });
             }
 
