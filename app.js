@@ -1,45 +1,69 @@
 const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebaseio.com/";
 
-// Helper function to safely handle formatting metrics without crashing the UI
 function formatMetric(value, decimals, fallback = "--") {
     if (value === undefined || value === null) return fallback;
     const num = Number(value);
     return isNaN(num) ? value : num.toFixed(decimals);
 }
 
-// Master interface injector map targeting your exact lowercase database keys
-function updateDashboardUI(data) {
-    if (!data) return;
+// Direct interface injector map
+function updateDashboardUI(current, dailyRainTotal) {
+    if (!current) return;
     
-    // Convert hPa to standard US Inches of Mercury (inHg) formatted to 2 decimals
-    const pressureInHg = data.pressure ? data.pressure * 0.0295301 : null;
+    const pressureInHg = current.pressure ? current.pressure * 0.0295301 : null;
 
-    document.getElementById('temp-val').innerText = `${formatMetric(data.temperature, 1)} °F`;
-    document.getElementById('humid-val').innerText = `${formatMetric(data.humidity, 1)} %`;
+    document.getElementById('temp-val').innerText = `${formatMetric(current.temperature, 1)} °F`;
+    document.getElementById('humid-val').innerText = `${formatMetric(current.humidity, 1)} %`;
     document.getElementById('press-val').innerText = `${formatMetric(pressureInHg, 2)} inHg`;
-    document.getElementById('wind-val').innerText = `${formatMetric(data.wind_speed, 1)} MPH`;
-    document.getElementById('dir-val').innerText = data.wind_dir || "--";
-    document.getElementById('rain-5min-val').innerText = `${formatMetric(data.rain_last_5_min, 3)} in`;
-    document.getElementById('rain-today-val').innerText = `${formatMetric(data.rain_total_today, 3)} in`;
+    document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
+    document.getElementById('dir-val').innerText = current.wind_dir || "--";
+    document.getElementById('rain-5min-val').innerText = `${formatMetric(current.rain_last_5_min, 3)} in`;
+    
+    // Injecting the analyst-side computed total instead of reading a hardcoded cloud value
+    document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
 }
 
-// Clear, direct API fetch call that pulls data straight from the cloud database
-async function fetchCurrentWeatherData() {
+// Master analytics extraction pipeline
+async function runWeatherDashboardPipeline() {
     try {
-        // Appending a timestamp query forces the browser to pull a fresh copy instead of loading old data
-        const response = await fetch(`${FIREBASE_DB_URL}current_reading.json?nocache=${Date.now()}`);
-        const currentReading = await response.json();
+        const cacheBuster = `?nocache=${Date.now()}`;
         
-        if (currentReading) {
-            updateDashboardUI(currentReading);
+        // 1. Fetch instantaneous real-time metrics row
+        const currentResponse = await fetch(`${FIREBASE_DB_URL}current_reading.json${cacheBuster}`);
+        const currentData = await currentResponse.json();
+        
+        if (!currentData) return;
+
+        // 2. Dynamically resolve today's date using the local browser clock
+        const localDate = new Date();
+        const year = localDate.getFullYear();
+        const month = String(localDate.getMonth() + 1).padStart(2, '0');
+        const day = String(localDate.getDate()).padStart(2, '0');
+        const todayFolderKey = `${year}-${month}-${day}`;
+
+        // 3. Query today's history directory tracking log entries
+        const historyResponse = await fetch(`${FIREBASE_DB_URL}history/${todayFolderKey}.json${cacheBuster}`);
+        const historyData = await historyResponse.json();
+
+        let calculatedDailyRain = 0.0;
+
+        // 4. Data Analyst Calculation Loop: Scan every log entry for today and sum the metrics
+        if (historyData) {
+            // Object.values converts the Firebase nested JSON map into a clean indexable array
+            calculatedDailyRain = Object.values(historyData).reduce((total, logRow) => {
+                const tip = Number(logRow.rain_last_5_min);
+                return total + (isNaN(tip) ? 0 : tip);
+            }, 0.0);
         }
+
+        // 5. Package both direct metrics and client-computed calculations straight into the UI layout
+        updateDashboardUI(currentData, calculatedDailyRain);
+
     } catch (error) {
-        console.error("Website failed to pull data from Firebase:", error);
+        console.error("Dashboard analysis pipeline failed:", error);
     }
 }
 
-// 1. Fire the data request immediately on page boot to eliminate the loading lag
-fetchCurrentWeatherData();
-
-// 2. Automatically repeat the direct data pull every 4 seconds to catch live radio ticks
-setInterval(fetchCurrentWeatherData, 4000);
+// Fire the analytical engine immediately on boot, then sweep for updates every 4 seconds
+runWeatherDashboardPipeline();
+setInterval(runWeatherDashboardPipeline, 4000);
