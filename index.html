@@ -15,14 +15,25 @@
 </head>
 <body>
     <h1>🏡 Garden Weather Station</h1>
+    <!-- Main Meteorological Conditions Grid -->
     <div class="grid">
         <div class="card"><div class="label">Temperature</div><div class="value" id="temp-val">-- °F</div></div>
         <div class="card"><div class="label">Humidity</div><div class="value" id="humid-val">-- %</div></div>
         <div class="card"><div class="label">Barometric Pressure</div><div class="value" id="press-val">-- inHg</div></div>
         <div class="card"><div class="label">Wind Speed</div><div class="value" id="wind-val">-- MPH</div></div>
         <div class="card"><div class="label">Wind Direction</div><div class="value" id="dir-val">--</div></div>
-        <div class="card"><div class="label">Rain (Last 5 Mins)</div><div class="value" id="rain-5min-val">-- in</div></div>
-        <div class="card"><div class="label">Rain Total Today</div><div class="value" id="rain-today-val">-- in</div></div>
+    </div>
+
+    <!-- NEW DEDICATED PRECIPITATION METRICS SECTION -->
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌧️ Precipitation Analytics</h2>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="card"><div class="label">Rainfall (Last 5 Mins)</div><div class="value" id="rain-5min-val" style="color: #3399ff;">-- in</div></div>
+        <div class="card"><div class="label">Rain Total Today</div><div class="value" id="rain-today-val" style="color: #3399ff;">-- in</div></div>
+    </div>
+
+    <!-- Historical Daily Rainfall Accumulation Chart Canvas -->
+    <div class="card" style="margin-top: 20px;">
+        <div id="rain-bar-chart"></div>
     </div>
     <script src="app.js"></script>
 </body>
