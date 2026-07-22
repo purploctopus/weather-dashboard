@@ -64,16 +64,31 @@ document.addEventListener("DOMContentLoaded", function() {
     const windSpeedChart = new ApexCharts(document.querySelector("#wind-speed-chart"), windSpeedChartOptions);
     windSpeedChart.render();
 
-    // NEW: 6. Initialize Compass Wind Direction Frequency Distribution Column Chart
+    // NEW 6. Initialize Chronological 5-Minute Wind Direction Timeline Chart
     const windDirChartOptions = {
-        chart: { type: 'bar', height: 300, toolbar: { show: false }, background: '#1e1e1e' },
-        theme: { mode: 'dark' }, colors: ['#e6a23c'], series: [{ name: 'Occurrences', data: [] }],
-        xaxis: { type: 'category', categories: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], axisBorder: { show: true, color: '#333' } },
-        plotOptions: { bar: { borderRadius: 4, columnWidth: '50%', dataLabels: { position: 'top' } } },
-        dataLabels: { enabled: true, style: { colors: ['#fff'] } },
-        tooltip: { y: { formatter: (val) => `${val} periods` } }
+        chart: {
+            type: 'scatter', // Scatter style works best for plotting clean, non-numerical text milestones over time
+            height: 300,
+            toolbar: { show: true },
+            background: '#1e1e1e',
+            animations: { enabled: false }
+        },
+        theme: { mode: 'dark' },
+        colors: ['#e6a23c'],
+        series: [{ name: 'Wind Direction', data: [] }],
+        xaxis: {
+            type: 'datetime',
+            labels: { datetimeUTC: false, format: 'hh:mm TT' },
+            axisBorder: { show: true, color: '#333' }
+        },
+        yaxis: {
+            categories: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], // Explicitly locks your compass points to fixed rows
+            labels: { style: { colors: '#8e8e93' } }
+        },
+        markers: { size: 6, strokeWidth: 0 },
+        tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val, opt) => opt.w.config.yaxis[0].categories[val] } }
     };
-    const windDirChart = new ApexCharts(document.querySelector("#wind-dir-chart"), windDirChartOptions);
+    const windDirChart = new ApexCharts(document.querySelector("#wind-dir-timeline-chart"), windDirChartOptions);
     windDirChart.render();
 
     function formatMetric(value, decimals, fallback = "--") {
