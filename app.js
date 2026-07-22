@@ -67,9 +67,15 @@ document.addEventListener("DOMContentLoaded", function() {
                         // Accumulate into the total year scale record register
                         aggregatedYearTotal += daySum;
 
-                        // Create an ApexCharts time-series object point: [Timestamp (ms), Calculated Value]
-                        const dateTimestamp = new Date(`${dateKey}T00:00:00`).getTime();
-                        yearlyTimelinePoints.push([dateTimestamp, daySum]);
+                        // FIX: Parse the date splitting the string to prevent UTC timezone shifting leaks
+                        const dateParts = dateKey.split('-');
+                        const year = parseInt(dateParts[0], 10);
+                        const month = parseInt(dateParts[1], 10) - 1; // JS Months are 0-11
+                        const day = parseInt(dateParts[2], 10);
+                        
+                        // Creates the timestamp using strict local midnight time coordinates
+                        const localMidnightTimestamp = new Date(year, month, day).getTime();
+                        yearlyTimelinePoints.push([localMidnightTimestamp, daySum]);
                     }
                 });
             }
