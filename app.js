@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
         chart: { type: 'bar', height: 300, toolbar: { show: false }, background: '#1e1e1e' },
         theme: { mode: 'dark' },
         colors: ['#3399ff'],
-        series: [{ name: 'Daily Rain', data: [0,0,0,0,0,0,0] }],
+        series: [{ name: 'Daily Rain', data: [] }], // <-- FIX: Ensure empty array is present
         xaxis: { categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
         plotOptions: { bar: { borderRadius: 4, dataLabels: { position: 'top' } } },
         dataLabels: { enabled: true, formatter: (val) => `${val.toFixed(2)} in`, style: { colors: ['#fff'] } }
