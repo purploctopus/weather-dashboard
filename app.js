@@ -51,6 +51,30 @@ document.addEventListener("DOMContentLoaded", function() {
     };
     const humidChart = new ApexCharts(document.querySelector("#humid-timeline-chart"), humidChartOptions);
     humidChart.render();
+    
+    // NEW: 5. Initialize High-Resolution 5-Minute Wind Speed Timeline Chart
+    const windSpeedChartOptions = {
+        chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
+        theme: { mode: 'dark' }, colors: ['#ff5050'], series: [{ name: 'Wind Speed', data: [] }],
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
+        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
+        tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} MPH` } }
+    };
+    const windSpeedChart = new ApexCharts(document.querySelector("#wind-speed-chart"), windSpeedChartOptions);
+    windSpeedChart.render();
+
+    // NEW: 6. Initialize Compass Wind Direction Frequency Distribution Column Chart
+    const windDirChartOptions = {
+        chart: { type: 'bar', height: 300, toolbar: { show: false }, background: '#1e1e1e' },
+        theme: { mode: 'dark' }, colors: ['#e6a23c'], series: [{ name: 'Occurrences', data: [] }],
+        xaxis: { type: 'category', categories: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], axisBorder: { show: true, color: '#333' } },
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '50%', dataLabels: { position: 'top' } } },
+        dataLabels: { enabled: true, style: { colors: ['#fff'] } },
+        tooltip: { y: { formatter: (val) => `${val} periods` } }
+    };
+    const windDirChart = new ApexCharts(document.querySelector("#wind-dir-chart"), windDirChartOptions);
+    windDirChart.render();
 
     function formatMetric(value, decimals, fallback = "--") {
         if (value === undefined || value === null) return fallback;
