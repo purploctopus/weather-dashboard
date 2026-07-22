@@ -66,17 +66,18 @@ document.addEventListener("DOMContentLoaded", function() {
                         // Push exactly ONE data value and ONE label string per day to the graph vectors
                         dailyRainTotalsArray.push(Number(daySum.toFixed(3)));
                         
-                        // Formats the string to look clean on the axis (e.g., "07-21")
+                        // Formats the string to look clean on the axis (e.g., converts "2026-07-21" to "07-21")
                         const shortDate = dateKey.substring(5);
                         dateLabelsArray.push(shortDate);
                     }
                 });
             }
 
-            // Push the single array mappings straight into the chart instance
+            // Sync the single array mappings straight into the chart instance
             rainChart.updateSeries([{ data: dailyRainTotalsArray }]);
             rainChart.updateOptions({ xaxis: { categories: dateLabelsArray } });
             
+            // Return the final calculation so it can be passed to your Year Total Card
             return aggregatedYearTotal;
 
         } catch (err) {
@@ -84,6 +85,7 @@ document.addEventListener("DOMContentLoaded", function() {
             return 0.0;
         }
     }
+
 
 
     // 3. Real-Time Operational Pipeline Logic Loop Control
