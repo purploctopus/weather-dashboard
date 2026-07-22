@@ -64,17 +64,23 @@ document.addEventListener("DOMContentLoaded", function() {
     const humidChart = new ApexCharts(document.querySelector("#humid-timeline-chart"), humidChartOptions);
     humidChart.render();
     
-    // 5. Initialize High-Resolution 5-Minute Wind Speed Timeline Chart
+    // 5. Initialize High-Resolution 5-Minute Dual Wind Analytics Chart
     const windSpeedChartOptions = {
         chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
         theme: { mode: 'dark' },
-        colors: ['#ff5050'],
-        series: [{ name: 'Wind Speed', data: [] }],
+        colors: ['#ff5050', '#ff9999'], // Bright red for Gusts, lighter coral red for Average Speed
+        // === UPDATED: Multi-series data tracking layers ===
+        series: [
+            { name: 'Peak Wind Gust', data: [] },
+            { name: 'Average Wind Speed', data: [] }
+        ],
         xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
-        // === FIX: Disables connecting lines over missing time gaps ===
-        stroke: { curve: 'smooth', width: 3, connectNulls: false },
+        stroke: { curve: 'smooth', width:, connectNulls: false }, // Thicker line for gusts, thinner for average
         dataLabels: { enabled: false },
-        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
+        fill: {
+            type: 'gradient',
+            gradient: { shadeIntensity: 1, opacityFrom: [0.2, 0.05], opacityTo: [0.01, 0.0] }
+        },
         tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} MPH` } }
     };
     const windSpeedChart = new ApexCharts(document.querySelector("#wind-speed-chart"), windSpeedChartOptions);
@@ -122,10 +128,12 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('humid-val').innerText = `${formatMetric(current.humidity, 1)} %`;
         document.getElementById('press-val').innerText = `${formatMetric(pressureInHg, 2)} inHg`;
         document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
-        document.getElementById('dir-val').innerText = current.wind_dir || "--";
         
-        const instantRain = current.rain_last_5_min !== undefined ? current.rain_last_5_min : current.rain_fall;
-        document.getElementById('rain-5min-val').innerText = `${formatMetric(instantRain, 3)} in`;
+        // NEW INJECTION ROW: Map your new peak gust database element
+        document.getElementById('gust-val').innerText = `${formatMetric(current.wind_gust, 1)} MPH`;
+        
+        document.getElementById('dir-val').innerText = current.wind_dir || "--";
+        document.getElementById('rain-5min-val').innerText = `${formatMetric(current.rain_last_5_min, 3)} in`;
         document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
         document.getElementById('rain-year-val').innerText = `${formatMetric(yearlyRainTotal, 3)} in`;
     }
@@ -189,7 +197,9 @@ document.addEventListener("DOMContentLoaded", function() {
             const pressTimelinePoints = [];
             const humidTimelinePoints = [];
             const windSpeedTimelinePoints = [];
+            const windGustTimelinePoints = [];
             const windDirTimelinePoints = [];
+
 
             if (historyData) {
                 const dateParts = todayFolderKey.split('-');
@@ -232,8 +242,13 @@ document.addEventListener("DOMContentLoaded", function() {
                         const humid = Number(logRow.humidity);
                         if (!isNaN(humid)) humidTimelinePoints.push([preciseLocalTimestamp, humid]);
                         
+                        // Extract True 5-Minute Average Wind Speed Data Point
                         const speed = Number(logRow.wind_speed);
                         if (!isNaN(speed)) windSpeedTimelinePoints.push([preciseLocalTimestamp, speed]);
+
+                        // NEW: Extract 5-Second Peak Wind Gust Data Point
+                        const gust = Number(logRow.wind_gust);
+                        if (!isNaN(gust)) windGustTimelinePoints.push([preciseLocalTimestamp, gust]);
 
                         const direction = logRow.wind_dir;
                         const compassMap = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -247,9 +262,11 @@ document.addEventListener("DOMContentLoaded", function() {
             tempChart.updateSeries([{ data: tempTimelinePoints }]);
             pressChart.updateSeries([{ data: pressTimelinePoints }]);
             humidChart.updateSeries([{ data: humidTimelinePoints }]);
-            windSpeedChart.updateSeries([{ data: windSpeedTimelinePoints }]);
+            windSpeedChart.updateSeries([
+                { data: windGustTimelinePoints },  // Series 0: Peak Wind Gust
+                { data: windSpeedTimelinePoints }  // Series 1: Average Wind Speed
+            ]);
             windDirChart.updateSeries([{ data: windDirTimelinePoints }]);
-
             const calculatedYearlyRain = await loadPrecipitationAnalytics();
             updateDashboardUI(currentData, calculatedDailyRain, calculatedYearlyRain);
 
