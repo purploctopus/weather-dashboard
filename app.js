@@ -64,10 +64,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const windSpeedChart = new ApexCharts(document.querySelector("#wind-speed-chart"), windSpeedChartOptions);
     windSpeedChart.render();
 
-    // NEW 6. Initialize Chronological 5-Minute Wind Direction Timeline Chart
+    // 6. Initialize Chronological 5-Minute Wind Direction Timeline Chart
     const windDirChartOptions = {
         chart: {
-            type: 'scatter', // Scatter style works best for plotting clean, non-numerical text milestones over time
+            type: 'scatter',
             height: 300,
             toolbar: { show: true },
             background: '#1e1e1e',
@@ -81,12 +81,27 @@ document.addEventListener("DOMContentLoaded", function() {
             labels: { datetimeUTC: false, format: 'hh:mm TT' },
             axisBorder: { show: true, color: '#333' }
         },
+        // === FIX: Lock ticks to 7 intervals and map row index numbers to compass strings ===
         yaxis: {
-            categories: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], // Explicitly locks your compass points to fixed rows
-            labels: { style: { colors: '#8e8e93' } }
+            tickAmount: 7, // Forces ApexCharts to make exactly 8 clean lines (0 through 7)
+            min: 0,
+            max: 7,
+            labels: {
+                style: { colors: '#8e8e93' },
+                formatter: function(val) {
+                    const compassMap = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                    const idx = Math.round(val);
+                    return compassMap[idx] || "";
+                }
+            }
         },
+        // =================================================================================
         markers: { size: 6, strokeWidth: 0 },
-        tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val, opt) => opt.w.config.yaxis[0].categories[val] } }
+        tooltip: {
+            x: { format: 'hh:mm TT' },
+            // Fixes the hover tooltip box to say "NE" instead of "1"
+            y: { formatter: (val) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(val)] }
+        }
     };
     const windDirChart = new ApexCharts(document.querySelector("#wind-dir-timeline-chart"), windDirChartOptions);
     windDirChart.render();
