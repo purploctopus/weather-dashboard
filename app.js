@@ -192,46 +192,54 @@ document.addEventListener("DOMContentLoaded", function() {
             const windDirTimelinePoints = [];
 
             if (historyData) {
-                // Isolate the exact month and day from the static todayFolderKey string (YYYY-MM-DD)
                 const dateParts = todayFolderKey.split('-');
                 const chartYear = parseInt(dateParts[0], 10);
-                const chartMonth = parseInt(dateParts[1], 10) - 1; // JS Months are 0-11
+                const chartMonth = parseInt(dateParts[1], 10) - 1;
                 const chartDay = parseInt(dateParts[2], 10);
 
-                Object.entries(historyData).forEach(([timeKey, logRow]) => {
+                const seenTimestamps = new Set();
+
+                // === FIX: Force keys into true numeric chronological order ===
+                const sortedTimeKeys = Object.keys(historyData).sort((a, b) => {
+                    return parseInt(a, 10) - parseInt(b, 10);
+                });
+                // ==============================================================
+
+                // Change Object.entries(historyData).forEach to loop through our sorted array keys instead
+                sortedTimeKeys.forEach(timeKey => {
+                    const logRow = historyData[timeKey];
+                    if (!logRow) return;
+
                     const tip = logRow.rain_last_5_min !== undefined ? Number(logRow.rain_last_5_min) : Number(logRow.rain_fall);
                     calculatedDailyRain += (isNaN(tip) ? 0 : tip);
 
-                    // Parse text time segments cleanly (HHMMSS)
                     const paddedTimeKey = timeKey.padStart(6, '0');
                     const hh = parseInt(paddedTimeKey.substring(0, 2), 10);
                     const mm = parseInt(paddedTimeKey.substring(2, 4), 10);
                     const ss = parseInt(paddedTimeKey.substring(4, 6), 10);
                     
-                    // FIX: Every historical and live point is now locked to the exact same calendar date
                     const preciseLocalTimestamp = new Date(chartYear, chartMonth, chartDay, hh, mm, ss).getTime();
 
-                    // Extract Temperature Data Point
-                    const temp = Number(logRow.temperature);
-                    if (!isNaN(temp)) tempTimelinePoints.push([preciseLocalTimestamp, temp]);
+                    if (!seenTimestamps.has(preciseLocalTimestamp)) {
+                        seenTimestamps.add(preciseLocalTimestamp);
 
-                    // Extract Pressure Data Point
-                    const press = Number(logRow.pressure);
-                    if (!isNaN(press)) pressTimelinePoints.push([preciseLocalTimestamp, press * 0.0295301]);
+                        const temp = Number(logRow.temperature);
+                        if (!isNaN(temp)) tempTimelinePoints.push([preciseLocalTimestamp, temp]);
 
-                    // Extract Humidity Data Point
-                    const humid = Number(logRow.humidity);
-                    if (!isNaN(humid)) humidTimelinePoints.push([preciseLocalTimestamp, humid]);
-                    
-                    // Extract Wind Speed Data Point
-                    const speed = Number(logRow.wind_speed);
-                    if (!isNaN(speed)) windSpeedTimelinePoints.push([preciseLocalTimestamp, speed]);
+                        const press = Number(logRow.pressure);
+                        if (!isNaN(press)) pressTimelinePoints.push([preciseLocalTimestamp, press * 0.0295301]);
 
-                    // Extract Wind Direction Data Point
-                    const direction = logRow.wind_dir;
-                    const compassMap = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-                    const dirIndex = compassMap.indexOf(direction);
-                    if (dirIndex !== -1) windDirTimelinePoints.push([preciseLocalTimestamp, dirIndex]);
+                        const humid = Number(logRow.humidity);
+                        if (!isNaN(humid)) humidTimelinePoints.push([preciseLocalTimestamp, humid]);
+                        
+                        const speed = Number(logRow.wind_speed);
+                        if (!isNaN(speed)) windSpeedTimelinePoints.push([preciseLocalTimestamp, speed]);
+
+                        const direction = logRow.wind_dir;
+                        const compassMap = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                        const dirIndex = compassMap.indexOf(direction);
+                        if (dirIndex !== -1) windDirTimelinePoints.push([preciseLocalTimestamp, dirIndex]);
+                    }
                 });
             }
 
