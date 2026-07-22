@@ -2,18 +2,39 @@ const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebas
 
 document.addEventListener("DOMContentLoaded", function() {
     
-    // 1. Initialize a Time-Series Area Chart designed for year-long tracking arrays
+    // 1. Initialize a Time-Series Area Chart with explicit Day-Level Axis constraints
     const rainChartOptions = {
-        chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e' },
+        chart: {
+            type: 'area',
+            height: 300,
+            toolbar: { show: true },
+            background: '#1e1e1e',
+            animations: { enabled: false } // Disabled to prevent drawing glitches over multi-day jumps
+        },
         theme: { mode: 'dark' },
         colors: ['#3399ff'],
         series: [{ name: 'Daily Rainfall', data: [] }],
-        xaxis: { type: 'datetime', labels: { datetimeUTC: false } },
-        stroke: { curve: 'smooth', width: 2 },
-        dataLabels: { enabled: false }, // Disabled for clutter protection over 365 points
+        xaxis: {
+            type: 'datetime',
+            tickPlacement: 'on',
+            labels: {
+                datetimeUTC: false,
+                format: 'MMM dd', // Forces the bottom axis to display calendar dates (e.g. Jul 21, Jul 22)
+            },
+            axisBorder: { show: true, color: '#333' }
+        },
+        stroke: { curve: 'smooth', width: 3 },
+        dataLabels: { enabled: false },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
+        markers: {
+            size: 5, // Adds a distinct visible dot on every calendar day so you see the individual totals
+            colors: ['#3399ff'],
+            strokeColors: '#1e1e1e',
+            strokeWidth: 2
+        },
         tooltip: { x: { format: 'MMM dd, yyyy' }, y: { formatter: (val) => `${val.toFixed(3)} in` } }
     };
+
     const rainChart = new ApexCharts(document.querySelector("#rain-bar-chart"), rainChartOptions);
     rainChart.render();
 
