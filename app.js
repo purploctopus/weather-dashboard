@@ -19,45 +19,61 @@ document.addEventListener("DOMContentLoaded", function() {
     // 2. Initialize High-Resolution 5-Minute Temperature Timeline Chart
     const tempChartOptions = {
         chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
-        theme: { mode: 'dark' }, colors: ['#00ffcc'], series: [{ name: 'Temperature', data: [] }],
+        theme: { mode: 'dark' },
+        colors: ['#00ffcc'],
+        series: [{ name: 'Temperature', data: [] }],
         xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
-        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
+        // === FIX: Disables connecting lines over missing time gaps ===
+        stroke: { curve: 'smooth', width: 3, connectNulls: false },
+        dataLabels: { enabled: false },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
         tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} °F` } }
     };
     const tempChart = new ApexCharts(document.querySelector("#temp-timeline-chart"), tempChartOptions);
     tempChart.render();
 
-    // NEW: 3. Initialize High-Resolution 5-Minute Barometric Pressure Timeline Chart
+    // 3. Initialize High-Resolution 5-Minute Barometric Pressure Timeline Chart
     const pressChartOptions = {
         chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
-        theme: { mode: 'dark' }, colors: ['#ff9900'], series: [{ name: 'Pressure', data: [] }],
+        theme: { mode: 'dark' },
+        colors: ['#ff9900'],
+        series: [{ name: 'Pressure', data: [] }],
         xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
-        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
+        // === FIX: Disables connecting lines over missing time gaps ===
+        stroke: { curve: 'smooth', width: 3, connectNulls: false },
+        dataLabels: { enabled: false },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
         tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(2)} inHg` } }
     };
     const pressChart = new ApexCharts(document.querySelector("#press-timeline-chart"), pressChartOptions);
     pressChart.render();
 
-    // NEW: 4. Initialize High-Resolution 5-Minute Humidity Timeline Chart
+    // 4. Initialize High-Resolution 5-Minute Humidity Timeline Chart
     const humidChartOptions = {
         chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
-        theme: { mode: 'dark' }, colors: ['#b366ff'], series: [{ name: 'Humidity', data: [] }],
+        theme: { mode: 'dark' },
+        colors: ['#b366ff'],
+        series: [{ name: 'Humidity', data: [] }],
         xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
-        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
+        // === FIX: Disables connecting lines over missing time gaps ===
+        stroke: { curve: 'smooth', width: 3, connectNulls: false },
+        dataLabels: { enabled: false },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
         tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} %` } }
     };
     const humidChart = new ApexCharts(document.querySelector("#humid-timeline-chart"), humidChartOptions);
     humidChart.render();
     
-    // NEW: 5. Initialize High-Resolution 5-Minute Wind Speed Timeline Chart
+    // 5. Initialize High-Resolution 5-Minute Wind Speed Timeline Chart
     const windSpeedChartOptions = {
         chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
-        theme: { mode: 'dark' }, colors: ['#ff5050'], series: [{ name: 'Wind Speed', data: [] }],
+        theme: { mode: 'dark' },
+        colors: ['#ff5050'],
+        series: [{ name: 'Wind Speed', data: [] }],
         xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
-        stroke: { curve: 'smooth', width: 3 }, dataLabels: { enabled: false },
+        // === FIX: Disables connecting lines over missing time gaps ===
+        stroke: { curve: 'smooth', width: 3, connectNulls: false },
+        dataLabels: { enabled: false },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
         tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(1)} MPH` } }
     };
@@ -66,40 +82,26 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // 6. Initialize Chronological 5-Minute Wind Direction Timeline Chart
     const windDirChartOptions = {
-        chart: {
-            type: 'scatter',
-            height: 300,
-            toolbar: { show: true },
-            background: '#1e1e1e',
-            animations: { enabled: false }
-        },
+        chart: { type: 'scatter', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
         theme: { mode: 'dark' },
         colors: ['#e6a23c'],
         series: [{ name: 'Wind Direction', data: [] }],
-        xaxis: {
-            type: 'datetime',
-            labels: { datetimeUTC: false, format: 'hh:mm TT' },
-            axisBorder: { show: true, color: '#333' }
-        },
-        // === FIX: Lock ticks to 7 intervals and map row index numbers to compass strings ===
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
         yaxis: {
-            tickAmount: 7, // Forces ApexCharts to make exactly 8 clean lines (0 through 7)
+            tickAmount: 7,
             min: 0,
             max: 7,
             labels: {
                 style: { colors: '#8e8e93' },
                 formatter: function(val) {
                     const compassMap = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-                    const idx = Math.round(val);
-                    return compassMap[idx] || "";
+                    return compassMap[Math.round(val)] || "";
                 }
             }
         },
-        // =================================================================================
         markers: { size: 6, strokeWidth: 0 },
         tooltip: {
             x: { format: 'hh:mm TT' },
-            // Fixes the hover tooltip box to say "NE" instead of "1"
             y: { formatter: (val) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(val)] }
         }
     };
@@ -190,21 +192,30 @@ document.addEventListener("DOMContentLoaded", function() {
             const windDirTimelinePoints = [];
 
             if (historyData) {
+                // Isolate the exact month and day from the static todayFolderKey string (YYYY-MM-DD)
+                const dateParts = todayFolderKey.split('-');
+                const chartYear = parseInt(dateParts[0], 10);
+                const chartMonth = parseInt(dateParts[1], 10) - 1; // JS Months are 0-11
+                const chartDay = parseInt(dateParts[2], 10);
+
                 Object.entries(historyData).forEach(([timeKey, logRow]) => {
                     const tip = logRow.rain_last_5_min !== undefined ? Number(logRow.rain_last_5_min) : Number(logRow.rain_fall);
                     calculatedDailyRain += (isNaN(tip) ? 0 : tip);
 
-                    // Parse text time key coordinates cleanly (HHMMSS) into local epoch millisecond formats
-                    const hh = parseInt(timeKey.substring(0, 2), 10);
-                    const mm = parseInt(timeKey.substring(2, 4), 10);
-                    const ss = parseInt(timeKey.substring(4, 6), 10);
-                    const preciseLocalTimestamp = new Date(yearStr, localDate.getMonth(), dayStr, hh, mm, ss).getTime();
+                    // Parse text time segments cleanly (HHMMSS)
+                    const paddedTimeKey = timeKey.padStart(6, '0');
+                    const hh = parseInt(paddedTimeKey.substring(0, 2), 10);
+                    const mm = parseInt(paddedTimeKey.substring(2, 4), 10);
+                    const ss = parseInt(paddedTimeKey.substring(4, 6), 10);
+                    
+                    // FIX: Every historical and live point is now locked to the exact same calendar date
+                    const preciseLocalTimestamp = new Date(chartYear, chartMonth, chartDay, hh, mm, ss).getTime();
 
                     // Extract Temperature Data Point
                     const temp = Number(logRow.temperature);
                     if (!isNaN(temp)) tempTimelinePoints.push([preciseLocalTimestamp, temp]);
 
-                    // Extract Pressure Data Point (Converts hPa to standard US inHg formatting)
+                    // Extract Pressure Data Point
                     const press = Number(logRow.pressure);
                     if (!isNaN(press)) pressTimelinePoints.push([preciseLocalTimestamp, press * 0.0295301]);
 
@@ -212,21 +223,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     const humid = Number(logRow.humidity);
                     if (!isNaN(humid)) humidTimelinePoints.push([preciseLocalTimestamp, humid]);
                     
-                    // Isolate Wind Speed using your exact lowercase database key
+                    // Extract Wind Speed Data Point
                     const speed = Number(logRow.wind_speed);
-                    if (!isNaN(speed)) {
-                        windSpeedTimelinePoints.push([preciseLocalTimestamp, speed]);
-                    }
+                    if (!isNaN(speed)) windSpeedTimelinePoints.push([preciseLocalTimestamp, speed]);
 
-                    // Isolate Wind Direction and map it to its corresponding Y-axis index slot
-                    const direction = logRow.wind_dir; // Targets exact database schema key
+                    // Extract Wind Direction Data Point
+                    const direction = logRow.wind_dir;
                     const compassMap = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
                     const dirIndex = compassMap.indexOf(direction);
-                    
-                    if (dirIndex !== -1) {
-                        // Coordinates: [Timestamp (ms), Y-Axis Index position row (0 through 7)]
-                        windDirTimelinePoints.push([preciseLocalTimestamp, dirIndex]);
-                    }
+                    if (dirIndex !== -1) windDirTimelinePoints.push([preciseLocalTimestamp, dirIndex]);
                 });
             }
 
