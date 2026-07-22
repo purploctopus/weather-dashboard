@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function() {
         series: [{ name: 'Pressure', data: [] }],
         xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
         // === FIX: Disables connecting lines over missing time gaps ===
-        stroke: { curve: 'smooth', width: 3, connectNulls: false },
+        stroke: { curve: 'smooth', width: [4, 2], connectNulls: false },
         dataLabels: { enabled: false },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.02 } },
         tooltip: { x: { format: 'hh:mm TT' }, y: { formatter: (val) => `${val.toFixed(2)} inHg` } }
@@ -68,14 +68,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const windSpeedChartOptions = {
         chart: { type: 'area', height: 300, toolbar: { show: true }, background: '#1e1e1e', animations: { enabled: false } },
         theme: { mode: 'dark' },
-        colors: ['#ff5050', '#ff9999'], // Bright red for Gusts, lighter coral red for Average Speed
-        // === UPDATED: Multi-series data tracking layers ===
+        colors: ['#ff5050', '#ff9999'],
         series: [
             { name: 'Peak Wind Gust', data: [] },
             { name: 'Average Wind Speed', data: [] }
         ],
         xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'hh:mm TT' }, axisBorder: { show: true, color: '#333' } },
-        stroke: { curve: 'smooth', width:, connectNulls: false }, // Thicker line for gusts, thinner for average
+        stroke: { curve: 'smooth', width: [4, 2], connectNulls: false },
         dataLabels: { enabled: false },
         fill: {
             type: 'gradient',
