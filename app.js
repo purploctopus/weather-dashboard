@@ -219,6 +219,8 @@ document.addEventListener("DOMContentLoaded", function() {
             tempChart.updateSeries([{ data: tempTimelinePoints }]);
             pressChart.updateSeries([{ data: pressTimelinePoints }]);
             humidChart.updateSeries([{ data: humidTimelinePoints }]);
+            windSpeedChart.updateSeries([{ data: windSpeedTimelinePoints }]);
+            windDirChart.updateSeries([{ data: windDirTimelinePoints }]);
 
             const calculatedYearlyRain = await loadPrecipitationAnalytics();
             updateDashboardUI(currentData, calculatedDailyRain, calculatedYearlyRain);
