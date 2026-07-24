@@ -17,9 +17,10 @@
     </style>
 </head>
 <body>
-    <h1>🏡 Garden Weather Base Station</h1>
+    <h1>🏡 Myers Clary Weather Station 📡</h1>
     
     <!-- Main Conditions Grid -->
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🫜 Garden Weather</h2>
     <div class="grid">
         <div class="card"><div class="label">Temperature</div><div class="value" id="temp-val">-- °F</div></div>
         <div class="card"><div class="label">Humidity</div><div class="value" id="humid-val">-- %</div></div>
@@ -27,6 +28,27 @@
         <div class="card"><div class="label">Avg Wind Speed</div><div class="value" id="wind-val">-- MPH</div></div>
         <div class="card"><div class="label">Peak Wind Gust</div><div class="value" id="gust-val" style="color: #ff5050;">-- MPH</div></div>
         <div class="card"><div class="label">Wind Direction</div><div class="value" id="dir-val">--</div></div>
+    </div>
+    
+    <!-- NEW DEDICATED REGIONAL METEO FORECAST GRID -->
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌐 Regional Weather</h2>
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="card" style="background: #152238; border-color: #1d3557;">
+            <div class="label" style="color: #a8dadc;">Temp</div>
+            <div class="value" id="meteo-temp" style="color: #4ea8de;">-- °F</div>
+        </div>
+        <div class="card" style="background: #152238; border-color: #1d3557;">
+            <div class="label" style="color: #a8dadc;">Humidity</div>
+            <div class="value" id="meteo-humid" style="color: #4ea8de;">-- %</div>
+        </div>
+        <div class="card" style="background: #152238; border-color: #1d3557;">
+            <div class="label" style="color: #a8dadc;">Wind Speed</div>
+            <div class="value" id="meteo-wind" style="color: #4ea8de;">-- MPH</div>
+        </div>
+        <div class="card" style="background: #152238; border-color: #1d3557;">
+            <div class="label" style="color: #a8dadc;">Cloud Cover</div>
+            <div class="value" id="meteo-clouds" style="color: #4ea8de;">-- %</div>
+        </div>
     </div>
     
     <!-- NEW DEDICATED TEMPERATURE ANALYTICS PANEL -->
@@ -68,13 +90,75 @@
 
     <!-- UPDATED: Chronological 5-Minute Wind Direction Timeline Panel -->
     <h2 style="color: #f5f5f7; font-weight: 500;">🧭 Wind Direction History (5-Min Interval)</h2>
-    <div class="card" style="margin-top: 20px;">
+    <!-- Wind Direction Chart Canvas Container -->
+    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
         <div id="wind-dir-timeline-chart"></div>
     </div>
+    
+    <!-- NEW DEDICATED 10-DAY ROLLING FORECAST BLOCK -->
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">📅 10-Day Rolling Forecast</h2>
+    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;">
+        <!-- JavaScript will dynamically inject all 10 forecast cards right here -->
+    </div>
 
+    <!-- NEW LARGE ADVANCED OPEN-METEO DATA PANEL -->
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌍 Advanced Regional Analytics (Open-Meteo)</h2>
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+        <div class="card" style="background: #1c1c1e; border-color: #3a3a3c;">
+            <div class="label" style="color: #ff9f0a;">Apparent Temp (Feels Like)</div>
+            <div class="value" id="meteo-apparent" style="color: #ff9f0a;">-- °F</div>
+        </div>
+        <div class="card" style="background: #1c1c1e; border-color: #3a3a3c;">
+            <div class="label" style="color: #30d158;">UV Index</div>
+            <div class="value" id="meteo-uv" style="color: #30d158;">--</div>
+            
+            <!-- NEW LIVE UV INDEX EXPLAIER -->
+            <div id="uv-safety-explainer" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
+                🟢 Index: Calculating sun exposure safety...
+            </div>
+        </div>
+        <div class="card" style="background: #1c1c1e; border-color: #3a3a3c;">
+            <div class="label" style="color: #64d2ff;">Dew Point</div>
+            <div class="value" id="meteo-dew" style="color: #64d2ff;">-- °F</div>
+            
+            <!-- NEW LIVE COMFORT INDEX EXPLAINER -->
+            <div id="dew-comfort-explainer" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
+                🔵 Index: Calculating air comfort...
+            </div>
+        </div>
+
+        <div class="card" style="background: #1c1c1e; border-color: #3a3a3c;">
+            <div class="label" style="color: #bf5af2;">Precipitation Probability</div>
+            <div class="value" id="meteo-pop" style="color: #bf5af2;">-- %</div>
+        </div>
+        <div class="card" style="background: #1c1c1e; border-color: #3a3a3c;">
+            <div class="label" style="color: #ff453a;">Soil Temp (Surface 0-10cm)</div>
+            <div class="value" id="meteo-soil-temp" style="color: #ff453a;">-- °F</div>
+            
+            <!-- NEW DYNAMIC GARDENER'S SEED GUIDE TRACKER -->
+            <div id="soil-planting-guide" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
+                🌱 Guide: Waiting for temperature check...
+            </div>
+        </div>
+        <div class="card" style="background: #1c1c1e; border-color: #3a3a3c; position: relative;">
+            <div class="label" style="color: #0a84ff;">Soil Moisture (0-10cm)</div>
+            <div class="value" id="meteo-soil-moist" style="color: #0a84ff;">-- m³/m³</div>
+            
+            <!-- NEW COMPACT DYNAMIC VISUAL LEGEND -->
+            <div id="moisture-legend" style="display: flex; gap: 4px; justify-content: space-between; font-size: 0.65rem; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px;">
+                <span id="leg-vrydry" style="opacity: 0.3; transition: all 0.3s;">🔴 Very Dry</span>
+                <span id="leg-dry" style="opacity: 0.3; transition: all 0.3s;">🟠 Dry</span>
+                <span id="leg-mod" style="opacity: 0.3; transition: all 0.3s;">🟡 Mod</span>
+                <span id="leg-mst" style="opacity: 0.3; transition: all 0.3s;">🟢 Ideal</span>
+                <span id="leg-wet" style="opacity: 0.3; transition: all 0.3s;">🔵 Wet</span>
+                <span id="leg-sat" style="opacity: 0.3; transition: all 0.3s;">🟣 Sat</span>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
 </html>
+
 
 

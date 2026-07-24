@@ -1,5 +1,201 @@
 const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebaseio.com/";
 
+// Add the Open-Meteo API endpoint right under your FIREBASE_DB_URL global variable
+const METEO_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=43.0731&longitude=-89.4012&current=temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation,weather_code,cloud_cover,uv_index,dew_point_2m,precipitation_probability,soil_temperature_0_to_10cm,soil_moisture_0_to_10cm&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=10&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch"
+//43.130180900406934, -89.44622950212249
+
+function getSoilMoistureColor(val) {
+    const num = Number(val);
+    if (isNaN(num)) return '#ffffff'; // Default white if data fails to parse
+    if (num <= 0.05) return '#ff453a'; // Very Dry - Red
+    if (num <= 0.10) return '#ff9f0a'; // Dry - Orange
+    if (num <= 0.20) return '#ffd60a'; // Moderately Dry - Yellow
+    if (num <= 0.30) return '#30d158'; // Moist (Ideal) - Green
+    if (num <= 0.40) return '#64d2ff'; // Wet - Light Blue
+    return '#bf5af2';                  // Saturated - Purple
+}
+
+// === NEW FEATURE: Dynamic Soil Temperature Planting Guide Engine ===
+function applyGardenerPlantingRules(val) {
+    const temp = Number(val);
+    const guideEl = document.getElementById('soil-planting-guide');
+    if (!guideEl || isNaN(temp)) return;
+
+    let guideText = "";
+    
+    if (temp < 45) {
+        guideText = "❄️ Soil Dormant: Too cold for seed activity.";
+    } else if (temp < 50) {
+        guideText = "🌱 Early Sowing: Plant Spinach, Peas, Radishes & Kale.";
+    } else if (temp < 60) {
+        guideText = "🥕 Cool Season: Plant Carrots, Beets, Onions & Lettuce.";
+    } else if (temp < 70) {
+        guideText = "🍅 Warm Season: Safe for Tomatoes, Corn, Beans & Cucumbers.";
+    } else if (temp < 85) {
+        guideText = "🌶️ Summer Peak: Ideal for Peppers, Eggplants, Melons & Squash.";
+    } else {
+        guideText = "🔥 High Heat: Protect roots. Add mulch to hold water.";
+    }
+
+    guideEl.innerText = guideText;
+}
+
+// === NEW FEATURE: Dew Point Air Comfort Index Explainer ===
+function applyDewPointComfortRules(val) {
+    const dew = Number(val);
+    const explainerEl = document.getElementById('dew-comfort-explainer');
+    if (!explainerEl || isNaN(dew)) return;
+
+    let comfortText = "";
+    
+    if (dew < 50) {
+        comfortText = "🍃 Crisp & Dry: Refreshing air quality. Great for yard work!";
+    } else if (dew < 55) {
+        comfortText = "☀️ Comfortable: Clean, pleasant baseline environment.";
+    } else if (dew < 60) {
+        comfortText = "🌾 Noticeable: Becoming slightly sticky. Standard summer feel.";
+    } else if (dew < 65) {
+        comfortText = "🥵 Muggy: Sticky and humid air. Plants love it, humans don't.";
+    } else if (dew < 70) {
+        comfortText = "🔥 Oppressive: Very thick and soupy. Take breaks in the shade.";
+    } else {
+        comfortText = "🤢 Miserable: Extreme tropical air mass. Air feels completely heavy.";
+    }
+
+    explainerEl.innerText = comfortText;
+}
+
+// === FEATURE FIXED: Completely mirrors the soil moisture color-coding logic ===
+function applyUVSafetyRules(val) {
+    const uv = Number(val);
+    const cardVal = document.getElementById('meteo-uv');
+    const explainerEl = document.getElementById('uv-safety-explainer');
+    
+    if (!cardVal || !explainerEl || isNaN(uv)) return;
+
+    // 1. Force the big number value text to render right here
+    cardVal.innerText = uv.toFixed(1);
+
+    let safetyText = "";
+    let activeColor = "#ffffff"; // Fallback white
+    
+    if (uv < 3.0) {
+        safetyText = "🟢 Low: Minimal skin hazard. Safe baseline sun levels.";
+        activeColor = "#30d158"; // Bright Green
+    } else if (uv < 6.0) {
+        safetyText = "🟡 Moderate: Burn risk in 30-45 mins. Apply SPF 15+ if outdoors.";
+        activeColor = "#ffd60a"; // Yellow
+    } else if (uv < 8.0) {
+        safetyText = "🟠 High: Burns can happen in 15-20 mins. Wear a hat & SPF 30+.";
+        activeColor = "#ff9f0a"; // Orange
+    } else if (uv < 11.0) {
+        safetyText = "🔴 Very High: Intense sun. Skin burns in 10 mins. Seek shade.";
+        activeColor = "#ff453a"; // Bright Red
+    } else {
+        safetyText = "🟣 Extreme: Dangerous radiation. Avoid direct midday sun entirely.";
+        activeColor = "#bf5af2"; // Purple
+    }
+
+    // 2. Color code BOTH properties together exactly like your soil moisture card
+    cardVal.style.color = activeColor;       // Forces the big number 7.0 to turn orange
+    explainerEl.innerText = safetyText;
+    explainerEl.style.color = activeColor;   // Forces the explainer text below it to turn orange
+}
+
+async function fetchRegionalMeteoData() {
+    try {
+        const response = await fetch(METEO_API_URL);
+        const data = await response.json();
+        if (!data) return;
+
+        // 1. Consolidated Current, Advanced, & Missing Core Injections
+        if (data.current) {
+            const cur = data.current;
+            const textMappings = {
+                // FIXED: Restored the four original missing forecast card targets
+                'meteo-temp': `${cur.temperature_2m.toFixed(1)} °F`,
+                'meteo-humid': `${cur.relative_humidity_2m.toFixed(0)} %`,
+                'meteo-wind': `${cur.wind_speed_10m.toFixed(1)} MPH`,
+                'meteo-clouds': `${cur.cloud_cover.toFixed(0)} %`,
+                
+                // Advanced soil and environment metrics
+                'meteo-apparent': `${cur.apparent_temperature.toFixed(1)} °F`,
+                'meteo-uv': cur.uv_index.toFixed(1),
+                'meteo-dew': `${cur.dew_point_2m.toFixed(1)} °F`,
+                'meteo-pop': `${cur.precipitation_probability.toFixed(0)} %`,
+                'meteo-soil-temp': `${cur.soil_temperature_0_to_10cm.toFixed(1)} °F`,
+                'meteo-soil-moist': `${cur.soil_moisture_0_to_10cm.toFixed(3)} m³/m³`
+            };
+            // 1. Batch inject all standard text strings via a single line key loop
+            Object.entries(textMappings).forEach(([id, txt]) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = txt;
+            });
+
+            // === NEW: DYNAMIC SOIL MOISTURE COLOR ENGINE ===
+            const soilMoistCard = document.getElementById('meteo-soil-moist');
+            if (soilMoistCard) {
+                const rawValue = cur.soil_moisture_0_to_10cm;
+                
+                // Inject the raw numeric fraction cleanly into your card
+                soilMoistCard.innerText = `${rawValue.toFixed(3)} m³/m³`;
+                
+                // Update the text color on the fly to match your chart benchmarks
+                soilMoistCard.style.color = getSoilMoistureColor(rawValue);
+            }
+            // ===============================================
+            const currentSoilTemp = cur.soil_temperature_0_to_10cm;
+            
+            // Execute the evaluation logic to swap out your planting text tips on the fly
+            applyGardenerPlantingRules(currentSoilTemp);
+            
+            const currentDewPoint = cur.dew_point_2m;
+            
+            // Execute the evaluation logic to swap out your humidity comfort tips
+            applyDewPointComfortRules(currentDewPoint);
+            
+            const currentUV = cur.uv_index;
+            
+            // Execute the evaluation logic to swap out your sun safety tips dynamically
+            applyUVSafetyRules(currentUV);
+        }
+
+        // 2. Consolidated 10-Day Forecast Array Builder
+        if (data.daily) {
+            const daily = data.daily;
+            const container = document.getElementById('forecast-container');
+            if (!container) return;
+            
+            const weatherLabels = ["☀️ Clear", "⛅ Partly Cloudy", "🌫️ Foggy", "🌧️ Drizzle/Rain", "❄️ Snowing", "🌦️ Showers", "⚡ Thunderstorm"];
+            const getLabel = (c) => weatherLabels[c === 0 ? 0 : c <= 3 ? 1 : c <= 48 ? 2 : c <= 67 ? 3 : c <= 77 ? 4 : c <= 82 ? 5 : 6];
+
+            container.innerHTML = daily.time.slice(0, 10).map((dateStr, i) => {
+                const [y, m, d] = dateStr.split('-').map(Number);
+                const localDate = new Date(y, m - 1, d);
+                
+                return `
+                    <div class="card" style="min-width: 145px; flex: 1; text-align: center; background: #1c1c1e; border-color: #2a2a2a; padding: 15px; border-radius: 12px;">
+                        <div style="font-size: 0.9rem; font-weight: 600; color: #8e8e93;">${localDate.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                        <div style="font-size: 0.8rem; color: #555; margin-bottom: 10px;">${localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 12px;">${getLabel(daily.weather_code[i])}</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #ff453a;">${daily.temperature_2m_max[i].toFixed(0)}°</div>
+                        <div style="font-size: 0.9rem; color: #0a84ff; margin-bottom: 8px;">${daily.temperature_2m_min[i].toFixed(0)}°</div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #bf5af2; letter-spacing: 0.05em; margin-top: 10px;">🌧️ ${daily.precipitation_probability_max[i]}%</div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error("Open-Meteo macro lookup failed to pull:", error);
+    }
+}
+
+
+// Fire the Open-Meteo API immediately on boot, and set it to loop every 5 minutes (300,000 ms).
+// (Note: Do not poll Open-Meteo every 4 seconds or they will temporarily block your IP address!)
+fetchRegionalMeteoData();
+setInterval(fetchRegionalMeteoData, 300000);
+
 document.addEventListener("DOMContentLoaded", function() {
     
     // 1. Initialize the Historical Precipitation Bar Chart Instance
