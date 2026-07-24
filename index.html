@@ -50,59 +50,8 @@
             <div class="value" id="meteo-clouds" style="color: #4ea8de;">-- %</div>
         </div>
     </div>
-    
-    <!-- NEW DEDICATED TEMPERATURE ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">🌡️ Temperature Analytics</h2>
-    <div class="card" style="margin-top: 20px;">
-        <div id="temp-timeline-chart"></div>
-    </div>
-
-    <h2>🌧️ Precipitation Analytics</h2>
-    <!-- Expanded Rain Grid containing your new Year Total Card -->
-    <div class="grid">
-        <div class="card"><div class="label">Rain (Last 5 Mins)</div><div class="value" id="rain-5min-val" style="color: #3399ff;">-- in</div></div>
-        <div class="card"><div class="label">Rain Total Today</div><div class="value" id="rain-today-val" style="color: #3399ff;">-- in</div></div>
-        <div class="card"><div class="label">Year Total Rain</div><div class="value" id="rain-year-val" style="color: #e6a23c;">-- in</div></div>
-    </div>
-
-    <!-- Rain Chart Canvas Element Container -->
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="rain-bar-chart"></div>
-    </div>
-
-    <!-- NEW DEDICATED BAROMETRIC PRESSURE ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">📉 Barometric Pressure Analytics</h2>
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="press-timeline-chart"></div>
-    </div>
-
-    <!-- NEW DEDICATED HUMIDITY ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">💧 Humidity Analytics</h2>
-    <div class="card" style="margin-top: 20px;">
-        <div id="humid-timeline-chart"></div>
-    </div>
-
-    <!-- NEW DEDICATED WIND SPEED ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">💨 Wind Speed Analytics</h2>
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="wind-speed-chart"></div>
-    </div>
-
-    <!-- UPDATED: Chronological 5-Minute Wind Direction Timeline Panel -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">🧭 Wind Direction History (5-Min Interval)</h2>
-    <!-- Wind Direction Chart Canvas Container -->
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="wind-dir-timeline-chart"></div>
-    </div>
-    
-    <!-- NEW DEDICATED 10-DAY ROLLING FORECAST BLOCK -->
-    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">📅 10-Day Rolling Forecast</h2>
-    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;">
-        <!-- JavaScript will dynamically inject all 10 forecast cards right here -->
-    </div>
-
     <!-- NEW LARGE ADVANCED OPEN-METEO DATA PANEL -->
-    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌍 Advanced Regional Analytics (Open-Meteo)</h2>
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌍 Advanced Regional Analytics</h2>
     <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
         <div class="card" style="background: #1c1c1e; border-color: #3a3a3c;">
             <div class="label" style="color: #ff9f0a;">Apparent Temp (Feels Like)</div>
@@ -154,6 +103,54 @@
                 <span id="leg-sat" style="opacity: 0.3; transition: all 0.3s;">🟣 Sat</span>
             </div>
         </div>
+    </div>
+    <!-- NEW DEDICATED 10-DAY ROLLING FORECAST BLOCK -->
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">📅 10-Day Rolling Forecast</h2>
+    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;">
+        <!-- JavaScript will dynamically inject all 10 forecast cards right here -->
+    </div>
+    
+    <h2>🌧️ Precipitation Analytics</h2>
+    <!-- Expanded Rain Grid containing your new Year Total Card -->
+    <div class="grid">
+        <div class="card"><div class="label">Rain (Last 5 Mins)</div><div class="value" id="rain-5min-val" style="color: #3399ff;">-- in</div></div>
+        <div class="card"><div class="label">Rain Total Today</div><div class="value" id="rain-today-val" style="color: #3399ff;">-- in</div></div>
+        <div class="card"><div class="label">Year Total Rain</div><div class="value" id="rain-year-val" style="color: #e6a23c;">-- in</div></div>
+    </div>
+    <!-- Rain Chart Canvas Element Container -->
+    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+        <div id="rain-bar-chart"></div>
+    </div>
+    
+    <!-- NEW DEDICATED TEMPERATURE ANALYTICS PANEL -->
+    <h2 style="color: #f5f5f7; font-weight: 500;">🌡️ Temperature Analytics</h2>
+    <div class="card" style="margin-top: 20px;">
+        <div id="temp-timeline-chart"></div>
+    </div>
+
+    <!-- NEW DEDICATED BAROMETRIC PRESSURE ANALYTICS PANEL -->
+    <h2 style="color: #f5f5f7; font-weight: 500;">📉 Barometric Pressure Analytics</h2>
+    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+        <div id="press-timeline-chart"></div>
+    </div>
+
+    <!-- NEW DEDICATED HUMIDITY ANALYTICS PANEL -->
+    <h2 style="color: #f5f5f7; font-weight: 500;">💧 Humidity Analytics</h2>
+    <div class="card" style="margin-top: 20px;">
+        <div id="humid-timeline-chart"></div>
+    </div>
+
+    <!-- NEW DEDICATED WIND SPEED ANALYTICS PANEL -->
+    <h2 style="color: #f5f5f7; font-weight: 500;">💨 Wind Speed Analytics</h2>
+    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+        <div id="wind-speed-chart"></div>
+    </div>
+
+    <!-- UPDATED: Chronological 5-Minute Wind Direction Timeline Panel -->
+    <h2 style="color: #f5f5f7; font-weight: 500;">🧭 Wind Direction History (5-Min Interval)</h2>
+    <!-- Wind Direction Chart Canvas Container -->
+    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+        <div id="wind-dir-timeline-chart"></div>
     </div>
 
     <script src="app.js"></script>
