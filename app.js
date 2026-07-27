@@ -4,18 +4,49 @@ const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebas
 const METEO_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=43.0731&longitude=-89.4012&current=temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation,weather_code,cloud_cover,uv_index,dew_point_2m,precipitation_probability,soil_temperature_0_to_10cm,soil_moisture_0_to_10cm&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=10&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch"
 //43.130180900406934, -89.44622950212249
 
-function getSoilMoistureColor(val) {
-    const num = Number(val);
-    if (isNaN(num)) return '#ffffff'; // Default white if data fails to parse
-    if (num <= 0.05) return '#ff453a'; // Very Dry - Red
-    if (num <= 0.10) return '#ff9f0a'; // Dry - Orange
-    if (num <= 0.20) return '#ffd60a'; // Moderately Dry - Yellow
-    if (num <= 0.30) return '#30d158'; // Moist (Ideal) - Green
-    if (num <= 0.40) return '#64d2ff'; // Wet - Light Blue
-    return '#bf5af2';                  // Saturated - Purple
+// === REPLACE YOUR OLD getSoilMoistureColor FUNCTION COMPLETELY WITH THIS ===
+function applySoilMoistureMetrics(rawM3) {
+    const num = Number(rawM3);
+    const card = document.getElementById('meteo-soil-moist');
+    if (!card || isNaN(num)) return;
+
+    // 1. Calculate relative percentage: (Raw - WiltingPoint) / (FieldCapacity - WiltingPoint) * 100
+    let percentage = ((num - 0.05) / (0.35 - 0.05)) * 100;
+    
+    // Clamp the values cleanly so it never shows negative numbers in severe droughts
+    if (percentage < 0) percentage = 0;
+    
+    // Update the card text string to show the clean % right next to the raw reference index
+    card.innerText = `${percentage.toFixed(0)}%`;
+
+    // 2. Reset and toggle your micro-legend active indicator states
+    const items = ['leg-vrydry', 'leg-dry', 'leg-mod', 'leg-mst', 'leg-wet', 'leg-sat'];
+    items.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.opacity = '0.3'; el.style.fontWeight = 'normal'; }
+    });
+
+    let activeId = '';
+    let activeColor = '#ffffff';
+
+    // Evaluate thresholds using your exact chart guidelines
+    if (num <= 0.05) { activeId = 'leg-vrydry'; activeColor = '#ff453a'; }      // Very Dry (0%)
+    else if (num <= 0.10) { activeId = 'leg-dry'; activeColor = '#ff9f0a'; }   // Dry (1% - 16%)
+    else if (num <= 0.20) { activeId = 'leg-mod'; activeColor = '#ffd60a'; }   // Mod (17% - 50%)
+    else if (num <= 0.30) { activeId = 'leg-mst'; activeColor = '#30d158'; }   // Ideal / Moist (51% - 83%)
+    else if (num <= 0.40) { activeId = 'leg-wet'; activeColor = '#64d2ff'; }   // Wet (84% - 116%)
+    else { activeId = 'leg-sat'; activeColor = '#bf5af2'; }                  // Saturated (>116%)
+
+    // Inject the warning color straight onto your elements simultaneously
+    card.style.color = activeColor;
+    const activeLabel = document.getElementById(activeId);
+    if (activeLabel) {
+        activeLabel.style.opacity = '1';
+        activeLabel.style.fontWeight = 'bold';
+    }
 }
 
-// === FIX: Encodes the SVG layout string to prevent the icon from reverting ===
+// === Encodes the SVG layout string to prevent the icon from reverting ===
 function updateDynamicSiteFavicon(wmoCode) {
     const faviconEl = document.getElementById('site-favicon');
     if (!faviconEl) return;
@@ -35,7 +66,7 @@ function updateDynamicSiteFavicon(wmoCode) {
     faviconEl.href = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(rawSvg);
 }
 
-// === NEW FEATURE: Dynamic Soil Temperature Planting Guide Engine ===
+// === Dynamic Soil Temperature Planting Guide Engine ===
 function applyGardenerPlantingRules(val) {
     const temp = Number(val);
     const guideEl = document.getElementById('soil-planting-guide');
@@ -152,17 +183,10 @@ async function fetchRegionalMeteoData() {
                 if (el) el.innerText = txt;
             });
 
-            // === NEW: DYNAMIC SOIL MOISTURE COLOR ENGINE ===
-            const soilMoistCard = document.getElementById('meteo-soil-moist');
-            if (soilMoistCard) {
-                const rawValue = cur.soil_moisture_0_to_10cm;
-                
-                // Inject the raw numeric fraction cleanly into your card
-                soilMoistCard.innerText = `${rawValue.toFixed(3)} m³/m³`;
-                
-                // Update the text color on the fly to match your chart benchmarks
-                soilMoistCard.style.color = getSoilMoistureColor(rawValue);
-            }
+            // === NEW: CONSOLIDATED SOIL MOISTURE PERCENTAGE & COLOR ENGINE ===
+            const rawValue = cur.soil_moisture_0_to_10cm;
+            applySoilMoistureMetrics(rawValue);
+
             // ===============================================
             const currentSoilTemp = cur.soil_temperature_0_to_10cm;
             
