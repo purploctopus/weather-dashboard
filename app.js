@@ -370,10 +370,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('humid-val').innerText = `${formatMetric(current.humidity, 1)} %`;
         document.getElementById('press-val').innerText = `${formatMetric(pressureInHg, 2)} inHg`;
         document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
-        
-        // NEW INJECTION ROW: Map your new peak gust database element
         document.getElementById('gust-val').innerText = `${formatMetric(current.wind_gust, 1)} MPH`;
-        
         document.getElementById('dir-val').innerText = current.wind_dir || "--";
         document.getElementById('rain-5min-val').innerText = `${formatMetric(current.rain_last_5_min, 3)} in`;
         document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
