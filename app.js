@@ -15,6 +15,26 @@ function getSoilMoistureColor(val) {
     return '#bf5af2';                  // Saturated - Purple
 }
 
+// === FIX: Encodes the SVG layout string to prevent the icon from reverting ===
+function updateDynamicSiteFavicon(wmoCode) {
+    const faviconEl = document.getElementById('site-favicon');
+    if (!faviconEl) return;
+
+    let weatherEmoji = "☀️"; // Default Clear
+    if (wmoCode <= 3)  weatherEmoji = "⛅"; // Partly Cloudy
+    else if (wmoCode <= 48) weatherEmoji = "🌁"; // Foggy
+    else if (wmoCode <= 67) weatherEmoji = "🌧️"; // Drizzle/Rain
+    else if (wmoCode <= 77) weatherEmoji = "❄️"; // Snowing
+    else if (wmoCode <= 82) weatherEmoji = "🌦️"; // Showers
+    else if (wmoCode >= 95) weatherEmoji = "⚡"; // Thunderstorm
+
+    // Clean raw string markup structure
+    const rawSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>${weatherEmoji}</text></svg>`;
+
+    // FIX: Encodes spaces and quotes safely so the browser doesn't drop the asset link
+    faviconEl.href = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(rawSvg);
+}
+
 // === NEW FEATURE: Dynamic Soil Temperature Planting Guide Engine ===
 function applyGardenerPlantingRules(val) {
     const temp = Number(val);
@@ -163,6 +183,9 @@ async function fetchRegionalMeteoData() {
         // 2. Consolidated 10-Day Forecast Array Builder
         if (data.daily) {
             const daily = data.daily;
+            
+            updateDynamicSiteFavicon(daily.weather_code[0]);
+            
             const container = document.getElementById('forecast-container');
             if (!container) return;
             
