@@ -3,6 +3,7 @@ const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebas
 // Add the Open-Meteo API endpoint right under your FIREBASE_DB_URL global variable
 const METEO_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=43.0731&longitude=-89.4012&current=temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation,weather_code,cloud_cover,uv_index,dew_point_2m,precipitation_probability,soil_temperature_0_to_10cm,soil_moisture_0_to_10cm&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=10&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch"
 //43.130180900406934, -89.44622950212249
+const METEO_AQI_URL = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=43.0731&longitude=-89.4012&current=us_aqi"
 
 // === REPLACE YOUR OLD getSoilMoistureColor FUNCTION COMPLETELY WITH THIS ===
 function applySoilMoistureMetrics(rawM3) {
@@ -153,61 +154,194 @@ function applyUVSafetyRules(val) {
     explainerEl.style.color = activeColor;   // Forces the explainer text below it to turn orange
 }
 
+// === FEATURE FIXED: Safely updates the humidity explainer text and colors ===
+function applyMeteoHumidityRules(val) {
+    const rh = Number(val);
+    const explainerEl = document.getElementById('humid-comfort-explainer');
+    if (!explainerEl || isNaN(rh)) return;
+
+    let comfortText = "";
+    let activeColor = "#4ea8de"; // Default blue fallback layout color
+    
+    if (rh < 30) {
+        comfortText = "🌵 Arid: Very dry air. Moisture evaporates rapidly.";
+        activeColor = "#ff9f0a"; // Orange warning for aridness
+    } else if (rh <= 50) {
+        comfortText = "🍃 Ideal: Crisp, comfortable, and perfect garden baseline.";
+        activeColor = "#30d158"; // Bright Green
+    } else if (rh <= 60) {
+        comfortText = "☀️ Moderate: Noticeable moisture, standard summer feel.";
+        activeColor = "#64d2ff"; // Light Blue
+    } else if (rh <= 70) {
+        comfortText = "🌾 Humid: Damp air. Fungal spores and plants thrive.";
+        activeColor = "#4ea8de"; // Deeper Blue
+    } else if (rh <= 80) {
+        comfortText = "🥵 Sticky: Heavy air. Evaporation and cooling slow down.";
+        activeColor = "#bf5af2"; // Purple
+    } else {
+        comfortText = "⛈️ Saturated: Thick air mass. Active dew, fog, or rain.";
+        activeColor = "#ff453a"; // Red
+    }
+
+    // Update the explainer text block and shift its color directly
+    explainerEl.innerText = comfortText;
+    explainerEl.style.color = activeColor;
+}
+
+// === FEATURE FIXED: Full 13-Level Beaufort Wind Scale Engine ===
+function applyMeteoWindRules(val) {
+    const speed = Number(val);
+    const explainerEl = document.getElementById('wind-speed-explainer');
+    if (!explainerEl || isNaN(speed)) return;
+
+    let txt = "";
+    let clr = "#4ea8de"; // Default fallback layout color
+
+    if (speed < 1.0) {
+        txt = "Calm: Smoke rises vertically. Sea like a mirror.";
+        clr = "#30d158"; // Green
+    } else if (speed <= 3.0) {
+        txt = "Light Air: Direction shown by smoke drift but not wind vanes.";
+        clr = "#30d158"; // Green
+    } else if (speed <= 7.0) {
+        txt = "Light Breeze: Wind felt on face; leaves rustle; wind vane moved.";
+        clr = "#64d2ff"; // Light Blue
+    } else if (speed <= 12.0) {
+        txt = "Gentle Breeze: Leaves and small twigs in constant motion.";
+        clr = "#4ea8de"; // Deeper Blue
+    } else if (speed <= 18.0) {
+        txt = "Moderate Breeze: Raises dust and loose paper; small branches move.";
+        clr = "#ffd60a"; // Yellow
+    } else if (speed <= 24.0) {
+        txt = "Fresh Breeze: Small trees begin to sway; crested wavelets form.";
+        clr = "#ff9f0a"; // Orange
+    } else if (speed <= 31.0) {
+        txt = "Strong Breeze: Large branches in motion; whistling in wires; umbrellas difficult.";
+        clr = "#ff453a"; // Red
+    } else if (speed <= 38.0) {
+        txt = "Near Gale: Whole trees in motion; inconvenience felt walking against wind.";
+        clr = "#ff453a"; // Red
+    } else if (speed <= 46.0) {
+        txt = "Gale: Twigs break off trees, generally impedes progress.";
+        clr = "#ff3333"; // Deep Red
+    } else if (speed <= 54.0) {
+        txt = "Strong Gale: Slight structural damage (chimney pots & slates removed).";
+        clr = "#bf5af2"; // Purple
+    } else if (speed <= 63.0) {
+        txt = "Storm: Seldom experienced inland; trees uprooted; considerable damage.";
+        clr = "#bf5af2"; // Purple
+    } else if (speed <= 72.0) {
+        txt = "Violent Storm: Very rarely experienced; accompanied by widespread damage.";
+        clr = "#d90429"; // Crimson
+    } else {
+        txt = "Hurricane: Devastating damage. Severe environmental emergency.";
+        clr = "#9b5de5"; // Dark Magenta
+    }
+    // Directly update the explainer text block and shift its warning color
+    explainerEl.innerText = txt;
+    explainerEl.style.color = clr;
+}
+
 async function fetchRegionalMeteoData() {
     try {
-        const response = await fetch(METEO_API_URL);
-        const data = await response.json();
+        // Run both Open-Meteo API network requests in parallel
+        const [weatherRes, aqiRes] = await Promise.all([
+            fetch(METEO_API_URL),
+            fetch(METEO_AQI_URL)
+        ]);
+        
+        const [data, aqiData] = await Promise.all([
+            weatherRes.json(),
+            aqiRes.json()
+        ]);
+
         if (!data) return;
 
-        // 1. Consolidated Current, Advanced, & Missing Core Injections
+        // 1. Core Weather & Advanced Analytics Injections
         if (data.current) {
             const cur = data.current;
             const textMappings = {
-                // FIXED: Restored the four original missing forecast card targets
                 'meteo-temp': `${cur.temperature_2m.toFixed(1)} °F`,
                 'meteo-humid': `${cur.relative_humidity_2m.toFixed(0)} %`,
                 'meteo-wind': `${cur.wind_speed_10m.toFixed(1)} MPH`,
                 'meteo-clouds': `${cur.cloud_cover.toFixed(0)} %`,
-                
-                // Advanced soil and environment metrics
                 'meteo-apparent': `${cur.apparent_temperature.toFixed(1)} °F`,
-                'meteo-uv': cur.uv_index.toFixed(1),
                 'meteo-dew': `${cur.dew_point_2m.toFixed(1)} °F`,
                 'meteo-pop': `${cur.precipitation_probability.toFixed(0)} %`,
-                'meteo-soil-temp': `${cur.soil_temperature_0_to_10cm.toFixed(1)} °F`,
-                'meteo-soil-moist': `${cur.soil_moisture_0_to_10cm.toFixed(3)} m³/m³`
+                'meteo-soil-temp': `${cur.soil_temperature_0_to_10cm.toFixed(1)} °F`
             };
-            // 1. Batch inject all standard text strings via a single line key loop
+
+            // Batch inject all standard text strings via a single line loop
             Object.entries(textMappings).forEach(([id, txt]) => {
                 const el = document.getElementById(id);
                 if (el) el.innerText = txt;
             });
 
-            // === NEW: CONSOLIDATED SOIL MOISTURE PERCENTAGE & COLOR ENGINE ===
+            // === CONSOLIDATED SOIL MOISTURE PERCENTAGE & COLOR ENGINE ===
             const rawValue = cur.soil_moisture_0_to_10cm;
             applySoilMoistureMetrics(rawValue);
 
-            // ===============================================
+            // === GARDENER'S SEED GERMINATION PLANTED TIME RULES ===
             const currentSoilTemp = cur.soil_temperature_0_to_10cm;
-            
-            // Execute the evaluation logic to swap out your planting text tips on the fly
             applyGardenerPlantingRules(currentSoilTemp);
             
+            // === DEW POINT AIR COMFORT REGULATORY LOGIC ===
             const currentDewPoint = cur.dew_point_2m;
-            
-            // Execute the evaluation logic to swap out your humidity comfort tips
             applyDewPointComfortRules(currentDewPoint);
             
+            // === UV INDEX SOLAR EXPOSITION THREAT ENGINE ===
             const currentUV = cur.uv_index;
-            
-            // Execute the evaluation logic to swap out your sun safety tips dynamically
             applyUVSafetyRules(currentUV);
+            
+            const currentMeteoHumid = cur.relative_humidity_2m;
+            applyMeteoHumidityRules(currentMeteoHumid);
+            
+            // Inside fetchRegionalMeteoData function right under applyMeteoHumidityRules(currentMeteoHumid);
+            const currentMeteoWind = cur.wind_speed_10m;
+            applyMeteoWindRules(currentMeteoWind);
         }
 
-        // 2. Consolidated 10-Day Forecast Array Builder
+        // 2. REAL-TIME US EPA AIR QUALITY METEOROLOGICAL ENGINE
+        if (aqiData && aqiData.current && aqiData.current.us_aqi !== undefined) {
+            const aqi = Math.round(aqiData.current.us_aqi);
+            const aqiValEl = document.getElementById('meteo-aqi');
+            const aqiTxtEl = document.getElementById('aqi-text-explainer');
+            
+            if (aqiValEl && aqiTxtEl) {
+                aqiValEl.innerText = aqi;
+                
+                let label = "Good";
+                let clr = "#30d158"; // Green Default
+                
+                if (aqi <= 50) {
+                    label = "Good";
+                    clr = "#30d158"; // Green
+                } else if (aqi <= 100) {
+                    label = "Moderate";
+                    clr = "#ffd60a"; // Yellow
+                } else if (aqi <= 150) {
+                    label = "Sensitive Groups";
+                    clr = "#ff9f0a"; // Orange
+                } else if (aqi <= 200) {
+                    label = "Unhealthy";
+                    clr = "#ff453a"; // Red
+                } else {
+                    label = "Hazardous";
+                    clr = "#bf5af2"; // Purple
+                }
+                
+                // Color match both text properties instantly
+                aqiValEl.style.color = clr;
+                aqiTxtEl.innerText = label;
+                aqiTxtEl.style.color = clr;
+            }
+        }
+
+        // 3. Consolidated 10-Day Forecast Array Builder
         if (data.daily) {
             const daily = data.daily;
             
+            // Update browser tab favicon dynamically for day 0
             updateDynamicSiteFavicon(daily.weather_code[0]);
             
             const container = document.getElementById('forecast-container');
@@ -221,13 +355,13 @@ async function fetchRegionalMeteoData() {
                 const localDate = new Date(y, m - 1, d);
                 
                 return `
-                    <div class="card" style="min-width: 145px; flex: 1; text-align: center; background: #1c1c1e; border-color: #2a2a2a; padding: 15px; border-radius: 12px;">
+                    <div class="card" style="min-width: 145px; flex: 1; text-align: center; background: #1c1c1e; border-color: #2a2a2a; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
                         <div style="font-size: 0.9rem; font-weight: 600; color: #8e8e93;">${localDate.toLocaleDateString('en-US', { weekday: 'short' })}</div>
                         <div style="font-size: 0.8rem; color: #555; margin-bottom: 10px;">${localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                         <div style="font-size: 1.2rem; margin-bottom: 12px;">${getLabel(daily.weather_code[i])}</div>
                         <div style="font-size: 1.1rem; font-weight: 700; color: #ff453a;">${daily.temperature_2m_max[i].toFixed(0)}°</div>
                         <div style="font-size: 0.9rem; color: #0a84ff; margin-bottom: 8px;">${daily.temperature_2m_min[i].toFixed(0)}°</div>
-                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #bf5af2; letter-spacing: 0.05em; margin-top: 10px;">🌧️ ${daily.precipitation_probability_max[i]}%</div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #bf5af2; letter-spacing: 0.05em; margin-top: auto; padding-top: 10px;">🌧️ ${daily.precipitation_probability_max[i]}%</div>
                     </div>
                 `;
             }).join('');
@@ -236,7 +370,6 @@ async function fetchRegionalMeteoData() {
         console.error("Open-Meteo macro lookup failed to pull:", error);
     }
 }
-
 
 // Fire the Open-Meteo API immediately on boot, and set it to loop every 5 minutes (300,000 ms).
 // (Note: Do not poll Open-Meteo every 4 seconds or they will temporarily block your IP address!)

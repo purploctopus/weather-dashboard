@@ -65,9 +65,9 @@
             <div class="value" id="dir-val">--</div>
         </div>
     </div>
-    <!-- NEW DEDICATED REGIONAL METEO FORECAST GRID -->
+    <!-- DEDICATED REGIONAL METEO FORECAST GRID -->
     <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌐 Regional Weather</h2>
-    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
         <div class="metric-card" style="background: #152238; border-color: #1d3557;">
             <div class="label" style="color: #a8dadc;">Temp</div>
             <div class="value" id="meteo-temp" style="color: #4ea8de;">-- °F</div>
@@ -75,14 +75,27 @@
         <div class="metric-card" style="background: #152238; border-color: #1d3557;">
             <div class="label" style="color: #a8dadc;">Humidity</div>
             <div class="value" id="meteo-humid" style="color: #4ea8de;">-- %</div>
+            
+            <div id="humid-comfort-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%; text-align: center;">
+                💧 Calculating moisture index...
+            </div>
         </div>
         <div class="metric-card" style="background: #152238; border-color: #1d3557;">
             <div class="label" style="color: #a8dadc;">Wind Speed</div>
             <div class="value" id="meteo-wind" style="color: #4ea8de;">-- MPH</div>
+            <div id="wind-speed-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%; text-align: center;">
+                💨 Calculating wind conditions...
+            </div>
         </div>
         <div class="metric-card" style="background: #152238; border-color: #1d3557;">
             <div class="label" style="color: #a8dadc;">Cloud Cover</div>
             <div class="value" id="meteo-clouds" style="color: #4ea8de;">-- %</div>
+        </div>
+        <!-- NEW DEDICATED REAL-TIME AQI DATA CARD -->
+        <div class="metric-card" style="background: #152238; border-color: #1d3557;">
+            <div class="label" style="color: #a8dadc;">Air Quality (AQI)</div>
+            <div class="value" id="meteo-aqi" style="color: #30d158;">--</div>
+            <div id="aqi-text-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%;">Good</div>
         </div>
     </div>
     <!-- NEW LARGE ADVANCED OPEN-METEO DATA PANEL -->
