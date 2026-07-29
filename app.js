@@ -701,11 +701,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const rawSpeciesList = await response.json();
             if (!rawSpeciesList) return;
 
-            // Apply your exact migration sieve filters to isolate unusual travelers
-//            const speciesList = rawSpeciesList.filter(bird => {
-//                if (FAVORITE_BIRDS.includes(bird.speciesCode)) return true;
-//                return !COMMON_MADISON_RESIDENTS.includes(bird.speciesCode);
-//            });
+
             // === ALL FILTERS REMOVED: Pass 100% of the raw eBird array data cleanly ===
             const speciesList = rawSpeciesList;
 
@@ -716,11 +712,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // 1. If the map tracking instance doesn't exist yet, build it cleanly on your canvas row
             if (!birdMapInstance) {
-                birdMapInstance = L.map('bird-map').setView([homeLat, homeLng], 13);
-                
-                // Ingest dark mode theme map tiles to preserve your dashboard's visual style layout
-                // ✅ FIXED: Changed 'dark_all' to 'dark_nodab' / 'dark_only_labels' style variants
-                // This pulls in a clean, legible dark map that clearly displays roads, lakes, and neighborhood names!
+               // birdMapInstance = L.map('bird-map').setView([homeLat, homeLng], 13);
+                // === FIX: Forces Leaflet's engine to track responsive width dimensions from the split second it boots ===
+                birdMapInstance = L.map('bird-map', { trackResize: true }).setView([homeLat, homeLng], 13);
                 L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                     maxZoom: 100
@@ -785,7 +779,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 // B. Compile and Append the Matching Text Card Item String Below the Map Canvas
                 cardsHtml += `
-                    <div class="metric-card" style="background: #1c1c1e; border-color: #2a2a2a; justify-content: flex-start; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div class="bird-data-card" style="background: #1c1c1e; border-color: #2a2a2a; justify-content: flex-start; padding: 15px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box;">
                         <div style="font-size: 1.1rem; font-weight: 700; color: #ffd60a; margin-bottom: 2px;">${bird.comName}</div>
                         <div style="font-size: 0.75rem; font-style: italic; color: #8e8e93; margin-bottom: 10px;">${bird.sciName}</div>
                         <div style="font-size: 1.6rem; font-weight: 800; color: #64d2ff; margin-bottom: 6px;">Seen: ${bird.howMany || "1"}</div>
@@ -796,6 +790,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                     </div>
                 `;
+
             });
 
             // C. Batch inject all compiled printed cards into your index layout placeholder elements

@@ -43,6 +43,34 @@
             }
             .label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8e8e93; }
             .value { font-size: 2.2rem; font-weight: 700; margin-top: 10px; color: #90ee90; }
+            /* Safe tab toggle states that allow Leaflet tiles to load perfectly */
+            .active-section {
+                display: block !important;
+            }
+            
+            .hidden-section {
+                position: absolute !important;
+                left: -9999px !important;
+                top: -9999px !important;
+                height: 0px !important;
+                overflow: hidden !important;
+            }
+            .bird-data-card {
+                background: #1c1c1e;
+                padding: 15px;
+                border-radius: 12px;
+                border: 1px solid #2a2a2a;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+
         </style>
     </head>
     <body>
@@ -52,11 +80,11 @@
                 ☀️ Weather Data
             </button>
             <button id="tab-birds" onclick="switchDashboardTab('birds')" style="background: #2a2a2a; color: #8e8e93; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
-                🦅 Local Birds
+                🦩 Local Birds
             </button>
         </div>
-        <div id="weather-section">
-    <h1>🏡 Myers Clary Weather Station 📡</h1>
+        <div id="weather-section" class="active-section">
+            <h1>🏡 Myers Clary Weather Station 📡</h1>
     <!-- Main Conditions Grid -->
     <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🫜 Garden Weather</h2>
     <div class="grid">
@@ -221,22 +249,25 @@
         <div id="wind-dir-timeline-chart"></div>
     </div>
 </div>
-        <div id="birds-section" style="display: none;">
-    <!-- NEW DEDICATED NEIGHBORHOOD BIRD MAP CONTAINER -->
-    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🦩 Recent Bird Sightings (eBird)</h2>
-    <div class="card" style="padding: 10px; margin-bottom: 50px; background: #1c1c1e;">
-        <!-- Leaflet map canvas anchoring element row -->
-        <div id="bird-map" style="height: 450px; width: 100%; border-radius: 8px;"></div>
-    </div>
+        
+        <!-- WRAP YOUR ENTIRE WILDLIFE DATA VIEW HERE -->
+        <div id="birds-section" class="hidden-section">
+            <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500; padding-left: 20px;">🦩 Recent Bird Sightings (eBird)</h2>
+            
+            <!-- === FIX: Forcing 100vw breaks out of container loops to guarantee full-width rendering instantly === -->
+            <div style="padding: 10px; margin-bottom: 50px; background: #1c1c1e; border-top: 1px solid #2a2a2a; border-bottom: 1px solid #2a2a2a; width: 100vw; margin-left: -20px; box-sizing: border-box;">
+                <!-- Leaflet map canvas anchoring element row auto sizing -->
+                <div id="bird-map" style="height: 450px; width: 100%; border-radius: 0px;"></div>
+            </div>
 
-    <!-- NEW DEDICATED SIGHTING LOG PRINT GRIDS -->
-    <h3 style="color: #f5f5f7; margin-top: 25px; font-weight: 500;">📋 Active 2-Mile Observation Logs</h3>
-    <div id="bird-cards-list" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 50px;">
-        <!-- JavaScript will automatically print out all specific bird logs right here -->
-    </div>
+            <!-- NEW DEDICATED SIGHTING LOG PRINT GRIDS -->
+            <h3 style="color: #f5f5f7; margin-top: 25px; font-weight: 500; padding-left: 20px;">📋 Active 2-Mile Observation Logs</h3>
+            <div id="bird-cards-list" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 50px; padding: 0 20px; box-sizing: border-box;">
+                <!-- JavaScript will automatically print out all specific bird logs right here -->
+            </div>
+        </div>
 </div>
-    <script src="app.js"></script>
-    <!-- TAB SWITCHER INTERACTION LAYER -->
+        <!-- TAB SWITCHER INTERACTION LAYER -->
     <script>
         function switchDashboardTab(activeTab) {
             const weatherSec = document.getElementById('weather-section');
@@ -244,32 +275,42 @@
             const weatherBtn = document.getElementById('tab-weather');
             const birdsBtn = document.getElementById('tab-birds');
 
+            // Force the page position straight back to the ceiling on every single switch
+            window.scrollTo(0, 0);
+
             if (activeTab === 'weather') {
-                weatherSec.style.display = 'block';
-                birdsSec.style.display = 'none';
+                weatherSec.className = 'active-section';
+                birdsSec.className = 'hidden-section';
                 
                 weatherBtn.style.background = '#0a84ff';
                 weatherBtn.style.color = '#ffffff';
                 birdsBtn.style.background = '#2a2a2a';
                 birdsBtn.style.color = '#8e8e93';
             } else {
-                weatherSec.style.display = 'none';
-                birdsSec.style.display = 'block';
+                weatherSec.className = 'hidden-section';
+                birdsSec.className = 'active-section';
                 
                 birdsBtn.style.background = '#0a84ff';
                 birdsBtn.style.color = '#ffffff';
                 weatherBtn.style.background = '#2a2a2a';
                 weatherBtn.style.color = '#8e8e93';
 
-                // === FIX: Forces Leaflet to rebuild the map size after the container becomes visible ===
+                // Give the browser a split second to paint the section, then trigger layout fixes
                 if (typeof birdMapInstance !== 'undefined' && birdMapInstance !== null) {
                     setTimeout(() => {
+                        // 1. Force Leaflet to recalculate the container bounds
                         birdMapInstance.invalidateSize();
-                    }, 100); // 100ms delay guarantees the container has finished opening in the DOM
+                        birdMapInstance.setView([43.1301, -89.4462], 13);
+                        
+                        // 2. === THE ULTIMATE FIX: Triggers a native window adjustment to snap the map wide ===
+                        window.dispatchEvent(new Event('resize'));
+                        // ==================================================================================
+                    }, 100);
                 }
             }
         }
     </script>
+    <script src="app.js"></script>
 </body>
 </body>
 </html>
