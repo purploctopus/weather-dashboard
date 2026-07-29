@@ -714,7 +714,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!birdMapInstance) {
                // birdMapInstance = L.map('bird-map').setView([homeLat, homeLng], 13);
                 // === FIX: Forces Leaflet's engine to track responsive width dimensions from the split second it boots ===
-                birdMapInstance = L.map('bird-map', { trackResize: true }).setView([homeLat, homeLng], 13);
+                birdMapInstance = L.map('bird-map', { trackResize: true }).setView([homeLat, homeLng], 14);
                 L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                     maxZoom: 100
