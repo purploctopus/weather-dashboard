@@ -45,7 +45,17 @@
             .value { font-size: 2.2rem; font-weight: 700; margin-top: 10px; color: #90ee90; }
         </style>
     </head>
-<body>
+    <body>
+        <!-- STICKY NAVIGATION BAR -->
+        <div style="display: flex; gap: 10px; background: #1c1c1e; padding: 15px; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #2a2a2a; margin: -20px -20px 30px -20px;">
+            <button id="tab-weather" onclick="switchDashboardTab('weather')" style="background: #0a84ff; color: #ffffff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
+                ☀️ Weather Data
+            </button>
+            <button id="tab-birds" onclick="switchDashboardTab('birds')" style="background: #2a2a2a; color: #8e8e93; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">
+                🦅 Local Birds
+            </button>
+        </div>
+        <div id="weather-section">
     <h1>🏡 Myers Clary Weather Station 📡</h1>
     <!-- Main Conditions Grid -->
     <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🫜 Garden Weather</h2>
@@ -210,14 +220,8 @@
     <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
         <div id="wind-dir-timeline-chart"></div>
     </div>
-    
-    <!-- 10-Day Rolling Forecast Container -->
-    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;"></div>
-
-    <!-- NEW DEDICATED NEIGHBORHOOD BIRD WATCHING CONTAINER -->
-    <!-- 10-Day Rolling Forecast Container -->
-    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;"></div>
-
+</div>
+        <div id="birds-section" style="display: none;">
     <!-- NEW DEDICATED NEIGHBORHOOD BIRD MAP CONTAINER -->
     <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🦩 Recent Bird Sightings (eBird)</h2>
     <div class="card" style="padding: 10px; margin-bottom: 50px; background: #1c1c1e;">
@@ -230,8 +234,43 @@
     <div id="bird-cards-list" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 50px;">
         <!-- JavaScript will automatically print out all specific bird logs right here -->
     </div>
-
+</div>
     <script src="app.js"></script>
+    <!-- TAB SWITCHER INTERACTION LAYER -->
+    <script>
+        function switchDashboardTab(activeTab) {
+            const weatherSec = document.getElementById('weather-section');
+            const birdsSec = document.getElementById('birds-section');
+            const weatherBtn = document.getElementById('tab-weather');
+            const birdsBtn = document.getElementById('tab-birds');
+
+            if (activeTab === 'weather') {
+                weatherSec.style.display = 'block';
+                birdsSec.style.display = 'none';
+                
+                weatherBtn.style.background = '#0a84ff';
+                weatherBtn.style.color = '#ffffff';
+                birdsBtn.style.background = '#2a2a2a';
+                birdsBtn.style.color = '#8e8e93';
+            } else {
+                weatherSec.style.display = 'none';
+                birdsSec.style.display = 'block';
+                
+                birdsBtn.style.background = '#0a84ff';
+                birdsBtn.style.color = '#ffffff';
+                weatherBtn.style.background = '#2a2a2a';
+                weatherBtn.style.color = '#8e8e93';
+
+                // === FIX: Forces Leaflet to rebuild the map size after the container becomes visible ===
+                if (typeof birdMapInstance !== 'undefined' && birdMapInstance !== null) {
+                    setTimeout(() => {
+                        birdMapInstance.invalidateSize();
+                    }, 100); // 100ms delay guarantees the container has finished opening in the DOM
+                }
+            }
+        }
+    </script>
+</body>
 </body>
 </html>
 
