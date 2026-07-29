@@ -1,40 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garden Weather Base Station</title>
-    <link id="site-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>☀️</text></svg>">
-    <!-- We load ApexCharts first inside the head so it is ready in memory -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <style>
-        body { font-family: sans-serif; background: #121212; color: #ffffff; margin: 20px; }
-        h1, h2 { color: #f5f5f7; font-weight: 500; }
-        h2 { margin-top: 40px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card {
-            background: #1e1e1e;
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #2a2a2a;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
-        }
-        .metric-card {
-            background: #1e1e1e;
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #2a2a2a;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-        }
-        .label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8e8e93; }
-        .value { font-size: 2.2rem; font-weight: 700; margin-top: 10px; color: #90ee90; }
-    </style>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Garden Weather Base Station</title>
+        
+        <!-- Dynamic Favicon Container -->
+        <link id="site-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>☀️</text></svg>">
+        
+        <!-- FIXED: Full path mapping styles for Leaflet Maps -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        
+        <!-- FIXED: Full path compiler engine script for Leaflet Maps -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        
+        <!-- We load ApexCharts first inside the head so it is ready in memory -->
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        
+        <style>
+            body { font-family: sans-serif; background: #121212; color: #ffffff; margin: 20px; }
+            h1, h2 { color: #f5f5f7; font-weight: 500; }
+            h2 { margin-top: 40px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+            .card {
+                background: #1e1e1e;
+                padding: 25px;
+                border-radius: 12px;
+                border: 1px solid #2a2a2a;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            }
+            .metric-card {
+                background: #1e1e1e;
+                padding: 25px;
+                border-radius: 12px;
+                border: 1px solid #2a2a2a;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+            }
+            .label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8e8e93; }
+            .value { font-size: 2.2rem; font-weight: 700; margin-top: 10px; color: #90ee90; }
+        </style>
+    </head>
 <body>
     <h1>🏡 Myers Clary Weather Station 📡</h1>
     <!-- Main Conditions Grid -->
@@ -199,6 +209,26 @@
     <!-- Wind Direction Chart Canvas Container -->
     <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
         <div id="wind-dir-timeline-chart"></div>
+    </div>
+    
+    <!-- 10-Day Rolling Forecast Container -->
+    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;"></div>
+
+    <!-- NEW DEDICATED NEIGHBORHOOD BIRD WATCHING CONTAINER -->
+    <!-- 10-Day Rolling Forecast Container -->
+    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;"></div>
+
+    <!-- NEW DEDICATED NEIGHBORHOOD BIRD MAP CONTAINER -->
+    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🦩 Recent Bird Sightings (eBird)</h2>
+    <div class="card" style="padding: 10px; margin-bottom: 50px; background: #1c1c1e;">
+        <!-- Leaflet map canvas anchoring element row -->
+        <div id="bird-map" style="height: 450px; width: 100%; border-radius: 8px;"></div>
+    </div>
+
+    <!-- NEW DEDICATED SIGHTING LOG PRINT GRIDS -->
+    <h3 style="color: #f5f5f7; margin-top: 25px; font-weight: 500;">📋 Active 2-Mile Observation Logs</h3>
+    <div id="bird-cards-list" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 50px;">
+        <!-- JavaScript will automatically print out all specific bird logs right here -->
     </div>
 
     <script src="app.js"></script>

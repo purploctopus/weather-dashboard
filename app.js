@@ -2,8 +2,15 @@ const FIREBASE_DB_URL = "https://home-weather-station-d643e-default-rtdb.firebas
 
 // Add the Open-Meteo API endpoint right under your FIREBASE_DB_URL global variable
 const METEO_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=43.0731&longitude=-89.4012&current=temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation,weather_code,cloud_cover,uv_index,dew_point_2m,precipitation_probability,soil_temperature_0_to_10cm,soil_moisture_0_to_10cm&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=10&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch"
-//43.130180900406934, -89.44622950212249
-const METEO_AQI_URL = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=43.0731&longitude=-89.4012&current=us_aqi"
+//43.130180900406934, -89.44622950212249 43.13009413665493, -89.44622958866425
+const METEO_AQI_URL = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=43.1301&longitude=-89.4462&current=us_aqi"
+// === EBIRD REST API INTEGRATION CONSTANTS ===
+const EBIRD_API_KEY = "btdlaf52hnv1";
+const homeLat = 43.1301;
+const homeLng = -89.4462;
+//const EBIRD_API_URL = "https://api.ebird.org/v2/data/obs/geo/recent?lat=43.0731&lng=-89.4462&dist=1&back=3&maxResults=10";
+//const EBIRD_API_URL = "https://api.ebird.org/v2/data/obs/geo/recent?lat=43.1301&lng=-89.4462&dist=10&back=7&maxResults=25&includeProvisional=true&hotspot=true";
+const EBIRD_API_URL = "https://api.ebird.org/v2/data/obs/geo/recent?lat=43.1301&lng=-89.4462&dist=3.2&back=7&maxResults=100&includeProvisional=true&hotspot=true";
 
 // === REPLACE YOUR OLD getSoilMoistureColor FUNCTION COMPLETELY WITH THIS ===
 function applySoilMoistureMetrics(rawM3) {
@@ -646,6 +653,165 @@ document.addEventListener("DOMContentLoaded", function() {
             console.error("Dashboard analysis pipeline failed:", error);
         }
     }
+    
+    // Dictionary of common, year-round Madison birds to filter out (The "Grass" Birds)
+    const COMMON_MADISON_RESIDENTS = [
+        'moudov', // Mourning Dove
+        'houspa', // House Sparrow
+        'amercrow',// American Crow
+        'blujay',  // Blue Jay
+        'norcar',  // Northern Cardinal
+        'bchchf',  // Black-capped Chickadee
+        'daejun',  // Dark-eyed Junco
+        'houfin',  // House Finch
+        'amgfin',  // American Goldfinch
+        'dowwoo',  // Downy Woodpecker
+        'haiwoo',  // Hairy Woodpecker
+        'wbnuth',  // White-breasted Nuthatch
+        'mallar3', // Mallard Duck
+        'cangoo'   // Canada Goose
+    ];
+    
+    // Species codes for your absolute favorites that must ALWAYS show up on the dashboard
+    const FAVORITE_BIRDS = [
+        'easblu', // Eastern Bluebird
+        'easmea'  // Eastern Meadowlark
+    ];
+    
+    // Helper function to calculate distance in miles between two coordinates (Haversine Formula) [Ref: 2]
+    function calculateDistanceInMiles(lat1, lon1, lat2, lon2) {
+        const R = 3958.8; // Earth's radius in miles
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    // Initialize a global map variable tracking instance to prevent duplicate allocation drops
+    let birdMapInstance = null;
+
+    async function fetchLocalBirdSightings() {
+        try {
+            const response = await fetch(EBIRD_API_URL, {
+                headers: { 'X-eBirdApiToken': EBIRD_API_KEY }
+            });
+            const rawSpeciesList = await response.json();
+            if (!rawSpeciesList) return;
+
+            // Apply your exact migration sieve filters to isolate unusual travelers
+//            const speciesList = rawSpeciesList.filter(bird => {
+//                if (FAVORITE_BIRDS.includes(bird.speciesCode)) return true;
+//                return !COMMON_MADISON_RESIDENTS.includes(bird.speciesCode);
+//            });
+            // === ALL FILTERS REMOVED: Pass 100% of the raw eBird array data cleanly ===
+            const speciesList = rawSpeciesList;
+
+            // Set up home baseline coordinate metrics
+            //43.130180900406934, -89.44622950212249
+            const homeLat = 43.1301;
+            const homeLng = -89.4462;
+
+            // 1. If the map tracking instance doesn't exist yet, build it cleanly on your canvas row
+            if (!birdMapInstance) {
+                birdMapInstance = L.map('bird-map').setView([homeLat, homeLng], 13);
+                
+                // Ingest dark mode theme map tiles to preserve your dashboard's visual style layout
+                // ✅ FIXED: Changed 'dark_all' to 'dark_nodab' / 'dark_only_labels' style variants
+                // This pulls in a clean, legible dark map that clearly displays roads, lakes, and neighborhood names!
+                L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                    maxZoom: 100
+                }).addTo(birdMapInstance);
+
+                // 2. Drop a distinct high-contrast pulsing anchor pin directly over your house roof line
+                const homeIcon = L.divIcon({
+                    html: `<div style="font-size: 24px; text-shadow: 0 0 4px #000;">🏠</div>`,
+                    className: 'custom-home-pin',
+                    iconSize: [24, 24],       // ✅ FIXED: Explicit pixel dimensions
+                    iconAnchor: [12, 12]    // ✅ FIXED: Centers the pin perfectly
+                });
+                L.marker([homeLat, homeLng], { icon: homeIcon }).addTo(birdMapInstance)
+                    .bindPopup(`<strong style="color: #00ffcc;">Garden Weather Station</strong><br>Your backyard baseline center anchor.`);
+            } else {
+                // If the map is already built, clear out transient bird markers from the previous data loop
+                birdMapInstance.eachLayer((layer) => {
+                    if (layer instanceof L.Marker && !layer.options.icon.options.className.includes('custom-home-pin')) {
+                        birdMapInstance.removeLayer(layer);
+                    }
+                });
+            }
+
+            // === 100% CLEAN CRASH-PROOF COMPILER LOOP ===
+            let cardsHtml = "";
+
+            speciesList.slice(0, 50).forEach(bird => {
+                const obsDate = new Date(bird.obsDt);
+                const timeString = obsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+                                   " at " + obsDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                
+                const distance = calculateDistanceInMiles(homeLat, homeLng, bird.lat, bird.lng);
+                
+                const jitterLat = bird.lat + (Math.random() - 0.5) * 0.0015;
+                const jitterLng = bird.lng + (Math.random() - 0.5) * 0.0015;
+
+                // Safe fallback marker icon configuration
+                const birdIcon = L.divIcon({
+                    html: `<div style="font-size: 22px; cursor: pointer; text-shadow: 0 0 3px #000;">🦩</div>`,
+                    className: 'transient-bird-pin',
+                    iconSize:[24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                // Set up the dark map popup cards layout
+                const popupContent = `
+                    <div style="font-family: sans-serif; color: #333; line-height: 1.4; min-width: 160px;">
+                        <strong style="font-size: 1rem; color: #d90429;">${bird.comName}</strong><br>
+                        <span style="font-style: italic; font-size: 0.8rem; color: #666;">${bird.sciName}</span><br>
+                        <hr style="border: 0; border-top: 1px solid #ddd; margin: 6px 0;">
+                        👥 <strong>Count:</strong> ${bird.howMany || "1"}<br>
+                        📍 <strong>Spotter:</strong> ${bird.locName}<br>
+                        📏 <strong>Distance:</strong> ${distance.toFixed(2)} miles away<br>
+                        📅 <strong>Spotted:</strong> ${timeString}
+                    </div>
+                `;
+
+                // A. Drop the Pin onto the Leaflet Canvas Map Layer Safely
+                L.marker([jitterLat, jitterLng], { icon: birdIcon })
+                    .addTo(birdMapInstance)
+                    .bindPopup(popupContent);
+
+                // B. Compile and Append the Matching Text Card Item String Below the Map Canvas
+                cardsHtml += `
+                    <div class="metric-card" style="background: #1c1c1e; border-color: #2a2a2a; justify-content: flex-start; padding: 15px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #ffd60a; margin-bottom: 2px;">${bird.comName}</div>
+                        <div style="font-size: 0.75rem; font-style: italic; color: #8e8e93; margin-bottom: 10px;">${bird.sciName}</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; color: #64d2ff; margin-bottom: 6px;">Seen: ${bird.howMany || "1"}</div>
+                        
+                        <div style="font-size: 0.7rem; color: #8e8e93; margin-top: auto; border-top: 1px solid #2a2a2a; padding-top: 8px; width: 100%;">
+                            📍 ${bird.locName} (${distance.toFixed(2)} mi)<br>
+                            📅 ${timeString}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // C. Batch inject all compiled printed cards into your index layout placeholder elements
+            const listContainer = document.getElementById('bird-cards-list');
+            if (listContainer) {
+                listContainer.innerHTML = cardsHtml;
+            }
+
+        } catch (error) {
+            console.error("Failed to query and map eBird database geometries:", error);
+        }
+    }
+
+    // Fire the tracker immediately when the page loads, and set it to refresh every 15 minutes
+    fetchLocalBirdSightings();
+    setInterval(fetchLocalBirdSightings, 900000);
 
     runWeatherDashboardPipeline();
     setInterval(runWeatherDashboardPipeline, 4000);
