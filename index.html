@@ -73,8 +73,21 @@
                 width: 100%;
                 box-sizing: border-box;
             }
-
-
+            /* Clean tooltip formatting for smooth hover over interactions */
+            .bird-map-label {
+                background-color: #1c1c1e !important;
+                color: #ffd60a !important;
+                border: 1px solid #2a2a2a !important;
+                font-family: sans-serif !important;
+                font-weight: 600 !important;
+                font-size: 0.8rem !important;
+                padding: 6px 10px !important;
+                border-radius: 6px !important;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
+            }
+            
+            /* Wipe out any hidden placeholder markers left in your layout cache memory */
+            .hidden-marker-icon { display: none !important; }
         </style>
     </head>
     <body>
@@ -259,7 +272,7 @@
             <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500; padding-left: 20px;">🦩 Recent Bird Sightings (eBird)</h2>
             
             <!-- === FIX: Forcing 100vw breaks out of container loops to guarantee full-width rendering instantly === -->
-            <div style="padding: 10px; margin-bottom: 50px; background: #1c1c1e; border-top: 1px solid #2a2a2a; border-bottom: 1px solid #2a2a2a; width: 100vw; margin-left: -20px; box-sizing: border-box;">
+            <div style="padding: 50px; margin-bottom: 0px; background: #1c1c1e; border-top: 1px solid #2a2a2a; border-bottom: 1px solid #2a2a2a; width: 100vw; margin-left: -25px; box-sizing: border-box;">
                 <!-- Leaflet map canvas anchoring element row auto sizing -->
                 <div id="bird-map" style="height: 450px; width: 100%; border-radius: 0px;"></div>
             </div>

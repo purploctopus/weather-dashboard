@@ -10,7 +10,7 @@ const homeLat = 43.1301;
 const homeLng = -89.4462;
 //const EBIRD_API_URL = "https://api.ebird.org/v2/data/obs/geo/recent?lat=43.0731&lng=-89.4462&dist=1&back=3&maxResults=10";
 //const EBIRD_API_URL = "https://api.ebird.org/v2/data/obs/geo/recent?lat=43.1301&lng=-89.4462&dist=10&back=7&maxResults=25&includeProvisional=true&hotspot=true";
-const EBIRD_API_URL = "https://api.ebird.org/v2/data/obs/geo/recent?lat=43.1301&lng=-89.4462&dist=3.2&back=7&maxResults=100&includeProvisional=true&hotspot=true";
+const EBIRD_API_URL = "https://api.ebird.org/v2/data/obs/geo/recent?lat=43.1301&lng=-89.4462&dist=8&back=5&maxResults=100&includeProvisional=true&hotspot=true";
 
 // === REPLACE YOUR OLD getSoilMoistureColor FUNCTION COMPLETELY WITH THIS ===
 function applySoilMoistureMetrics(rawM3) {
@@ -701,7 +701,11 @@ document.addEventListener("DOMContentLoaded", function() {
             const rawSpeciesList = await response.json();
             if (!rawSpeciesList) return;
 
-            // Restore your exact regional migration sieve filters
+            // 1. FIXED: Define your home metrics FIRST so the sorting logic can read them!
+            const homeLat = 43.1301;
+            const homeLng = -89.4462;
+
+            // 2. Keep your exact filter logic running next
             const speciesList = rawSpeciesList.filter(bird => {
                 if (typeof FAVORITE_BIRDS !== 'undefined' && FAVORITE_BIRDS.includes(bird.speciesCode)) {
                     return true;
@@ -712,9 +716,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 return true;
             });
 
-            // Exact backyard Westport coordinates anchor
-            const homeLat = 43.1301;
-            const homeLng = -89.4462;
+            // 3. Run the neighborhood sorting array using the initialized coordinates
+            speciesList.sort((birdA, birdB) => {
+                const distA = calculateDistanceInMiles(homeLat, homeLng, birdA.lat, birdA.lng);
+                const distB = calculateDistanceInMiles(homeLat, homeLng, birdB.lat, birdB.lng);
+                return distA - distB;
+            });
 
             // 1. Initialize Leaflet map instance centered over your real location
             if (!birdMapInstance) {
@@ -723,7 +730,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 // CORRECTED: maxZoom is clamped to 18 to fix the un-rendered gray tiles issue
                 L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-                    maxZoom: 18
+                    maxZoom: 28
                 }).addTo(birdMapInstance);
 
                 // House Anchor Marker Setup
@@ -742,17 +749,56 @@ document.addEventListener("DOMContentLoaded", function() {
                 birdMapInstance.removeLayer(birdClusterGroup);
             }
 
-            // Initialize a completely fresh cluster group instance
+            // === FIXED: Turn off zooming/wheel styles and setup clean list lookups ===
             birdClusterGroup = L.markerClusterGroup({
-                spiderfyOnMaxZoom: true,
-                showCoverageOnHover: false,
-                zoomToBoundsOnClick: true
+                spiderfyOnMaxZoom: false,   // Kills the mechanical wheel layout lines
+                zoomToBoundsOnClick: false, // ✅ FIXED: Kills the blind zoom-in actions entirely
+                showCoverageOnHover: false
             });
+
+            // =======================================================================================
+            // INTERCEPT CLICK EVENT: Drops down a clean scrolling list popup for stacked park bird logs
+            // =======================================================================================
+            birdClusterGroup.on('clusterclick', function (a) {
+                // 1. Gather all child markers packed inside the clicked cluster group
+                const childMarkers = a.layer.getAllChildMarkers();
+                
+                // 2. Set up a crisp high-contrast popup scroll pane structure
+                let popupListHtml = `
+                    <div style="font-family: sans-serif; color: #1c1c1e; max-height: 220px; overflow-y: auto; min-width: 220px; padding-right: 5px;">
+                        <strong style="font-size: 0.95rem; color: #0a84ff; display: block; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                            📋 Cluster Checklist (${childMarkers.length} Species)
+                        </strong>
+                `;
+
+                // 3. Loop through every single bird inside this specific checklist batch group
+                childMarkers.forEach(marker => {
+                    // Extract the clean name and count variables we saved inside the options block!
+                    const name = marker.options.birdName || "Unknown Bird";
+                    const count = marker.options.birdCount || "1";
+
+                    popupListHtml += `
+                        <div style="padding: 5px 0; border-bottom: 1px solid #f5f5f7; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                            <span style="font-weight: 600; color: #1c1c1e;">${name}</span>
+                            <!-- ✅ FIXED: Replaced generic 'Sighting' text with the real individual observation count -->
+                            <span style="background: #0a84ff; color: #ffffff; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">x${count}</span>
+                        </div>
+                    `;
+                });
+
+                popupListHtml += `</div>`;
+
+                // 4. Open the neat summary list popup directly over the clicked cluster coordinates!
+                L.popup()
+                    .setLatLng(a.latlng)
+                    .setContent(popupListHtml)
+                    .openOn(birdMapInstance);
+            });
+            // =======================================================================================
 
             let cardsHtml = "";
 
-            // Loop through sightings to build map markers and print text logs together
-            speciesList.slice(0, 50).forEach(bird => {
+            speciesList.slice(0, 100).forEach(bird => {
                 const obsDate = new Date(bird.obsDt);
                 const timeString = obsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
                                    " at " + obsDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -760,15 +806,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 const distance = calculateDistanceInMiles(homeLat, homeLng, bird.lat, bird.lng);
                 const isFav = typeof FAVORITE_BIRDS !== 'undefined' && FAVORITE_BIRDS.includes(bird.speciesCode);
                 const markerEmoji = isFav ? "⭐" : "🦩";
+                const labelText = isFav ? `⭐ ${bird.comName}` : bird.comName;
 
-                // HARDCODED INDEPENDENT PIN OPTIONS (Completely typo-proof)
-                const birdIcon = L.divIcon({
-                    html: `<div style="font-size: 22px; cursor: pointer; text-shadow: 0 0 3px #000;">${markerEmoji}</div>`,
-                    className: 'transient-bird-pin',
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
-                });
-
+                // 1. FIXED: Moved popupContent UP so it is completely defined before the marker reads it!
                 const popupContent = `
                     <div style="font-family: sans-serif; color: #333; line-height: 1.4; min-width: 160px;">
                         <strong style="font-size: 1rem; color: #d90429;">${isFav ? '⭐ ' : ''}${bird.comName}</strong><br>
@@ -781,7 +821,31 @@ document.addEventListener("DOMContentLoaded", function() {
                     </div>
                 `;
 
-                const birdMarker = L.marker([bird.lat, bird.lng], { icon: birdIcon }).bindPopup(popupContent);
+                // 2. Clean, single-point pin icon layout
+                const birdIcon = L.divIcon({
+                    html: `<div style="font-size: 22px; cursor: pointer; text-shadow: 0 0 3px #000;">🦩</div>`,
+                    className: 'transient-bird-pin',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                // Build the standard marker object safely using the compiled templates
+                const birdMarker = L.marker([bird.lat, bird.lng], {
+                    icon: birdIcon,
+                    // === FIX: Save the raw name and count right inside the marker options object ===
+                    birdName: bird.comName,
+                    birdCount: bird.howMany || "1"
+                }).bindPopup(popupContent);
+
+                // 4. Tooltip opens ONLY on hover instead of cluttering the viewport permanently
+                birdMarker.bindTooltip(labelText, {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'bird-map-label',
+                    sticky: true
+                });
+
+                // Push the clean hover pin straight into your spider-leg cluster group
                 birdClusterGroup.addLayer(birdMarker);
 
                 // B. Compile and Append the Matching Text Card Item String Below the Map Canvas
