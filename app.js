@@ -848,9 +848,15 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Push the clean hover pin straight into your spider-leg cluster group
                 birdClusterGroup.addLayer(birdMarker);
 
+                // === SAFE VARIABLE CLEANUP: Strips single and double quotes so text strings can never crash the onclick ===
+                const cleanComName = bird.comName.replace(/"/g, '\\"').replace(/'/g, "\\'");
+                const cleanSciName = bird.sciName.replace(/"/g, '\\"').replace(/'/g, "\\'");
+                const cleanLocName = bird.locName.replace(/"/g, '\\"').replace(/'/g, "\\'");
+
                 // B. Compile and Append the Matching Text Card Item String Below the Map Canvas
                 cardsHtml += `
-                    <div class="bird-data-card" style="background: #1c1c1e; border-color: #2a2a2a; justify-content: flex-start; padding: 15px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box;">
+                    <div class="bird-data-card" onclick="openBirdDetailModal('${cleanComName}', '${cleanSciName}', '${cleanLocName}', ${distance})" style="background: #1c1c1e; border-color: #2a2a2a; justify-content: flex-start; padding: 15px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box; cursor: pointer;">
+                        
                         <div style="font-size: 1.1rem; font-weight: 700; color: #ffd60a; margin-bottom: 2px;">${isFav ? '⭐ ' : ''}${bird.comName}</div>
                         <div style="font-size: 0.75rem; font-style: italic; color: #8e8e93; margin-bottom: 10px;">${bird.sciName}</div>
                         <div style="font-size: 1.6rem; font-weight: 800; color: #64d2ff; margin-bottom: 6px;">Seen: ${bird.howMany || "1"}</div>
@@ -861,6 +867,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                     </div>
                 `;
+
+
             });
 
             // Add the populated cluster instance to the active viewport map canvas
@@ -884,3 +892,92 @@ document.addEventListener("DOMContentLoaded", function() {
     runWeatherDashboardPipeline();
     setInterval(runWeatherDashboardPipeline, 4000);
 });
+// ====================================================================
+// WIKIPEDIA DYNAMIC FIELD GUIDE API MODAL ENGINE
+// ====================================================================
+async function openBirdDetailModal(comName, sciName, locName, distance) {
+    let modal = document.getElementById('bird-info-modal');
+    let titleEl = document.getElementById('modal-bird-name');
+    let sciEl = document.getElementById('modal-bird-sci');
+    let locEl = document.getElementById('modal-bird-loc');
+    let distEl = document.getElementById('modal-bird-dist');
+    let summaryEl = document.getElementById('modal-bird-summary');
+    let imgEl = document.getElementById('modal-bird-photo');
+    let loaderEl = document.getElementById('modal-photo-loader');
+
+    if (!modal) return;
+
+    titleEl.textContent = comName;
+    sciEl.textContent = sciName;
+    locEl.textContent = locName;
+    distEl.textContent = parseFloat(distance).toFixed(2);
+    
+    modal.style.setProperty('display', 'flex', 'important');
+    imgEl.style.display = 'none';
+    loaderEl.style.display = 'block';
+    loaderEl.textContent = "🔍 Fetching Wikipedia Field Guide...";
+    summaryEl.textContent = "Loading encyclopedia summary description layers...";
+
+    try {
+        let cleanSci = sciName ? sciName.replace(/\\/g, "").trim() : "";
+        let cleanCom = comName ? comName.replace(/\\/g, "").trim() : "";
+
+        // 1. Initial Attempt: Query by Scientific Name
+        let wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanSci)}&prop=pageimages|extracts&exintro&explaintext&exchars=350&piprop=original&format=json&origin=*&redirects=1`;
+        console.log("🔬 WIKI SCIENTIFIC SEARCH LINK:", wikiUrl);
+
+        let res = await fetch(wikiUrl);
+        let data = await res.json();
+        
+        let pages = data.query && data.query.pages ? data.query.pages : null;
+        let keysArray = pages ? Object.keys(pages) : [];
+        let pageId = keysArray.length > 0 ? keysArray[0] : "-1";
+
+        // ✅ FIXED: If the scientific page is missing text extract layers, drop to Common Name immediately!
+        if (!pages || pageId === "-1" || !pages[pageId] || !pages[pageId].extract) {
+            wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanCom)}&prop=pageimages|extracts&exintro&explaintext&exchars=350&piprop=original&format=json&origin=*&redirects=1`;
+            console.log("🦩 WIKI COMMON SEARCH LINK:", wikiUrl);
+
+            res = await fetch(wikiUrl);
+            data = await res.json();
+            pages = data.query && data.query.pages ? data.query.pages : null;
+            keysArray = pages ? Object.keys(pages) : [];
+            pageId = keysArray.length > 0 ? keysArray[0] : "-1";
+        }
+
+        // 3. Render compiled data assets directly to window frames
+        if (pages && pageId !== "-1" && pages[pageId]) {
+            let pageData = pages[pageId];
+
+            if (pageData.original && pageData.original.source) {
+                imgEl.src = pageData.original.source;
+                imgEl.style.display = 'block';
+                loaderEl.style.display = 'none';
+            } else {
+                loaderEl.textContent = "📷 No Public Domain Wiki Photo Available";
+            }
+
+            if (pageData.extract) {
+                summaryEl.textContent = pageData.extract;
+            } else {
+                summaryEl.textContent = "No field guide summary text found on Wikipedia.";
+            }
+        } else {
+            loaderEl.textContent = "📷 Field Guide Not Found";
+            summaryEl.textContent = "Could not locate a clean matching encyclopedia log on Wikipedia.";
+        }
+    } catch (err) {
+        console.error("Wikipedia REST API query loop failure:", err);
+        loaderEl.textContent = "⚠️ Failed to reach network source databases";
+        summaryEl.textContent = "An error occurred while attempting to query the live MediaWiki directories.";
+    }
+}
+
+
+function closeBirdDetailModal() {
+    let modal = document.getElementById('bird-info-modal');
+    if (modal) modal.style.setProperty('display', 'none', 'important');
+}
+
+//        let wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanSci)}&prop=pageimages|extracts&exintro&explaintext&exchars=350&piprop=original&format=json&origin=*&redirects=1`;
+// wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanCom)}&prop=pageimages|extracts&exintro&explaintext&exchars=350&piprop=original&format=json&origin=*&redirects=1`;

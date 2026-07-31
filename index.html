@@ -2,94 +2,102 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Garden Weather Base Station</title>
-        
-        <!-- Dynamic Favicon Container -->
-        <link id="site-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>☀️</text></svg>">
-        
-        <!-- FIXED: Full path mapping styles for Leaflet Maps -->
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-        
-        <!-- FIXED: Full path compiler engine script for Leaflet Maps -->
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-        
-        <!-- We load ApexCharts first inside the head so it is ready in memory -->
-        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-        
-        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-        <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-        
-        <style>
-            body { font-family: sans-serif; background: #121212; color: #ffffff; margin: 20px; }
-            h1, h2 { color: #f5f5f7; font-weight: 500; }
-            h2 { margin-top: 40px; }
-            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
-            .card {
-                background: #1e1e1e;
-                padding: 25px;
-                border-radius: 12px;
-                border: 1px solid #2a2a2a;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            }
-            .metric-card {
-                background: #1e1e1e;
-                padding: 25px;
-                border-radius: 12px;
-                border: 1px solid #2a2a2a;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-                text-align: center;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-            }
-            .label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8e8e93; }
-            .value { font-size: 2.2rem; font-weight: 700; margin-top: 10px; color: #90ee90; }
-            /* Safe tab toggle states that allow Leaflet tiles to load perfectly */
-            .active-section {
-                display: block !important;
-            }
-            
-            .hidden-section {
-                position: absolute !important;
-                left: -9999px !important;
-                top: -9999px !important;
-                height: 0px !important;
-                overflow: hidden !important;
-            }
-            .bird-data-card {
-                background: #1c1c1e;
-                padding: 15px;
-                border-radius: 12px;
-                border: 1px solid #2a2a2a;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-                text-align: center;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-                width: 100%;
-                box-sizing: border-box;
-            }
-            /* Clean tooltip formatting for smooth hover over interactions */
-            .bird-map-label {
-                background-color: #1c1c1e !important;
-                color: #ffd60a !important;
-                border: 1px solid #2a2a2a !important;
-                font-family: sans-serif !important;
-                font-weight: 600 !important;
-                font-size: 0.8rem !important;
-                padding: 6px 10px !important;
-                border-radius: 6px !important;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
-            }
-            
-            /* Wipe out any hidden placeholder markers left in your layout cache memory */
-            .hidden-marker-icon { display: none !important; }
-        </style>
-    </head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Garden Weather Base Station</title>
+                
+                <!-- Dynamic Favicon Container -->
+                <link id="site-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>☀️</text></svg>">
+                    
+                    <!-- FIXED: Full path mapping styles for Leaflet Maps -->
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+                    
+                    <!-- FIXED: Full path compiler engine script for Leaflet Maps -->
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+                    
+                    <!-- We load ApexCharts first inside the head so it is ready in memory -->
+                    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+                    
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+                    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+                    
+                    <style>
+                        body { font-family: sans-serif; background: #121212; color: #ffffff; margin: 20px; }
+                        h1, h2 { color: #f5f5f7; font-weight: 500; }
+                        h2 { margin-top: 40px; }
+                        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+                        .card {
+                            background: #1e1e1e;
+                            padding: 25px;
+                            border-radius: 12px;
+                            border: 1px solid #2a2a2a;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                        }
+                        .metric-card {
+                            background: #1e1e1e;
+                            padding: 25px;
+                            border-radius: 12px;
+                            border: 1px solid #2a2a2a;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                            text-align: center;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: flex-start;
+                        }
+                        .label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8e8e93; }
+                        .value { font-size: 2.2rem; font-weight: 700; margin-top: 10px; color: #90ee90; }
+                        /* Safe tab toggle states that allow Leaflet tiles to load perfectly */
+                        .active-section {
+                            display: block !important;
+                        }
+                        
+                        .hidden-section {
+                            position: absolute !important;
+                            left: -9999px !important;
+                            top: -9999px !important;
+                            height: 0px !important;
+                            overflow: hidden !important;
+                        }
+                        .bird-data-card {
+                            background: #1c1c1e;
+                            padding: 15px;
+                            border-radius: 12px;
+                            border: 1px solid #2a2a2a;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                            text-align: center;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: flex-start;
+                            width: 100%;
+                            box-sizing: border-box;
+                        }
+                        /* Clean tooltip formatting for smooth hover over interactions */
+                        .bird-map-label {
+                            background-color: #1c1c1e !important;
+                            color: #ffd60a !important;
+                            border: 1px solid #2a2a2a !important;
+                            font-family: sans-serif !important;
+                            font-weight: 600 !important;
+                            font-size: 0.8rem !important;
+                            padding: 6px 10px !important;
+                            border-radius: 6px !important;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
+                        }
+                        
+                        /* Force the info popup modal window straight onto the viewport display surface */
+                        .show-modal-window {
+                            display: flex !important;
+                            opacity: 1 !important;
+                            visibility: visible !important;
+                            z-index: 999999 !important;
+                        }
+                        
+                        /* Wipe out any hidden placeholder markers left in your layout cache memory */
+                        .hidden-marker-icon { display: none !important; }
+                    </style>
+                </head>
     <body>
         <!-- STICKY NAVIGATION BAR -->
         <div style="display: flex; gap: 10px; background: #1c1c1e; padding: 15px; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #2a2a2a; margin: -20px -20px 30px -20px;">
@@ -102,170 +110,170 @@
         </div>
         <div id="weather-section" class="active-section">
             <h1>🏡 Myers Clary Weather Station 📡</h1>
-    <!-- Main Conditions Grid -->
-    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🫜 Garden Weather</h2>
-    <div class="grid">
-        <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
-            <div class="label">Temperature</div>
-            <div class="value" id="temp-val">-- °F</div>
-        </div>
-        <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
-            <div class="label">Humidity</div>
-            <div class="value" id="humid-val">-- %</div>
-        </div>
-        <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
-            <div class="label">Barometric Pressure</div>
-            <div class="value" id="press-val">-- inHg</div>
-        </div>
-        <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
-            <div class="label">Avg Wind Speed</div>
-            <div class="value" id="wind-val">-- MPH</div>
-        </div>
-        <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
-            <div class="label">Peak Wind Gust</div>
-            <div class="value" id="gust-val">-- MPH</div>
-        </div>
-        <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
-            <div class="label">Wind Direction</div>
-            <div class="value" id="dir-val">--</div>
-        </div>
-    </div>
-    <!-- DEDICATED REGIONAL METEO FORECAST GRID -->
-    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌐 Regional Weather</h2>
-    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-        <div class="metric-card" style="background: #152238; border-color: #1d3557;">
-            <div class="label" style="color: #a8dadc;">Temp</div>
-            <div class="value" id="meteo-temp" style="color: #4ea8de;">-- °F</div>
-        </div>
-        <div class="metric-card" style="background: #152238; border-color: #1d3557;">
-            <div class="label" style="color: #a8dadc;">Humidity</div>
-            <div class="value" id="meteo-humid" style="color: #4ea8de;">-- %</div>
+            <!-- Main Conditions Grid -->
+            <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🫜 Garden Weather</h2>
+            <div class="grid">
+                <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
+                    <div class="label">Temperature</div>
+                    <div class="value" id="temp-val">-- °F</div>
+                </div>
+                <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
+                    <div class="label">Humidity</div>
+                    <div class="value" id="humid-val">-- %</div>
+                </div>
+                <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
+                    <div class="label">Barometric Pressure</div>
+                    <div class="value" id="press-val">-- inHg</div>
+                </div>
+                <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
+                    <div class="label">Avg Wind Speed</div>
+                    <div class="value" id="wind-val">-- MPH</div>
+                </div>
+                <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
+                    <div class="label">Peak Wind Gust</div>
+                    <div class="value" id="gust-val">-- MPH</div>
+                </div>
+                <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
+                    <div class="label">Wind Direction</div>
+                    <div class="value" id="dir-val">--</div>
+                </div>
+            </div>
+            <!-- DEDICATED REGIONAL METEO FORECAST GRID -->
+            <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌐 Regional Weather</h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                <div class="metric-card" style="background: #152238; border-color: #1d3557;">
+                    <div class="label" style="color: #a8dadc;">Temp</div>
+                    <div class="value" id="meteo-temp" style="color: #4ea8de;">-- °F</div>
+                </div>
+                <div class="metric-card" style="background: #152238; border-color: #1d3557;">
+                    <div class="label" style="color: #a8dadc;">Humidity</div>
+                    <div class="value" id="meteo-humid" style="color: #4ea8de;">-- %</div>
+                    
+                    <div id="humid-comfort-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%; text-align: center;">
+                        💧 Calculating moisture index...
+                    </div>
+                </div>
+                <div class="metric-card" style="background: #152238; border-color: #1d3557;">
+                    <div class="label" style="color: #a8dadc;">Wind Speed</div>
+                    <div class="value" id="meteo-wind" style="color: #4ea8de;">-- MPH</div>
+                    <div id="wind-speed-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%; text-align: center;">
+                        💨 Calculating wind conditions...
+                    </div>
+                </div>
+                <div class="metric-card" style="background: #152238; border-color: #1d3557;">
+                    <div class="label" style="color: #a8dadc;">Cloud Cover</div>
+                    <div class="value" id="meteo-clouds" style="color: #4ea8de;">-- %</div>
+                </div>
+                <!-- NEW DEDICATED REAL-TIME AQI DATA CARD -->
+                <div class="metric-card" style="background: #152238; border-color: #1d3557;">
+                    <div class="label" style="color: #a8dadc;">Air Quality (AQI)</div>
+                    <div class="value" id="meteo-aqi" style="color: #30d158;">--</div>
+                    <div id="aqi-text-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%;">Good</div>
+                </div>
+            </div>
+            <!-- NEW LARGE ADVANCED OPEN-METEO DATA PANEL -->
+            <!-- <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌍 Advanced Regional Analytics</h2> -->
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
+                    <div class="label" style="color: #ff9f0a;">Apparent Temp (Feels Like)</div>
+                    <div class="value" id="meteo-apparent" style="color: #ff9f0a;">-- °F</div>
+                </div>
+                <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
+                    <div class="label" style="color: #30d158;">UV Index</div>
+                    <div class="value" id="meteo-uv" style="color: #30d158;">--</div>
+                    
+                    <!-- NEW LIVE UV INDEX EXPLAIER -->
+                    <div id="uv-safety-explainer" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
+                        🟢 Index: Calculating sun exposure safety...
+                    </div>
+                </div>
+                <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
+                    <div class="label" style="color: #64d2ff;">Dew Point</div>
+                    <div class="value" id="meteo-dew" style="color: #64d2ff;">-- °F</div>
+                    
+                    <!-- NEW LIVE COMFORT INDEX EXPLAINER -->
+                    <div id="dew-comfort-explainer" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
+                        🔵 Index: Calculating air comfort...
+                    </div>
+                </div>
+                
+                <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
+                    <div class="label" style="color: #bf5af2;">Precipitation Probability</div>
+                    <div class="value" id="meteo-pop" style="color: #bf5af2;">-- %</div>
+                </div>
+                <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
+                    <div class="label" style="color: #ff453a;">Soil Temp (Surface 0-10cm)</div>
+                    <div class="value" id="meteo-soil-temp" style="color: #ff453a;">-- °F</div>
+                    
+                    <!-- NEW DYNAMIC GARDENER'S SEED GUIDE TRACKER -->
+                    <div id="soil-planting-guide" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
+                        🌱 Guide: Waiting for temperature check...
+                    </div>
+                </div>
+                <div class="metric-card" style="background: #152238; border-color: #3a3a3c; position: relative;">
+                    <div class="label" style="color: #0a84ff;">Soil Moisture (0-10cm)</div>
+                    <div class="value" id="meteo-soil-moist" style="color: #0a84ff;">--%</div>
+                    
+                    <!-- NEW COMPACT DYNAMIC VISUAL LEGEND -->
+                    <div id="moisture-legend" style="display: flex; gap: 4px; justify-content: space-between; font-size: 0.65rem; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px;">
+                        <span id="leg-vrydry" style="transition: all 0.3s;">🔴 None</span>
+                        <span id="leg-dry" style="transition: all 0.3s;">🟠 Dry</span>
+                        <span id="leg-mod" style="transition: all 0.3s;">🟡 Mod</span>
+                        <span id="leg-mst" style="transition: all 0.3s;">🟢 Ideal</span>
+                        <span id="leg-wet" style="transition: all 0.3s;">🔵 Wet</span>
+                        <span id="leg-sat" style="transition: all 0.3s;">🟣 Sat</span>
+                    </div>
+                </div>
+            </div>
+            <!-- NEW DEDICATED 10-DAY ROLLING FORECAST BLOCK -->
+            <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">📅 10-Day Rolling Forecast</h2>
+            <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;">
+                <!-- JavaScript will dynamically inject all 10 forecast cards right here -->
+            </div>
             
-            <div id="humid-comfort-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%; text-align: center;">
-                💧 Calculating moisture index...
+            <h2>🌧️ Precipitation Analytics</h2>
+            <!-- Expanded Rain Grid containing your new Year Total Card -->
+            <div class="grid">
+                <div class="card"><div class="label">Rain (Last 5 Mins)</div><div class="value" id="rain-5min-val" style="color: #3399ff;">-- in</div></div>
+                <div class="card"><div class="label">Rain Total Today</div><div class="value" id="rain-today-val" style="color: #3399ff;">-- in</div></div>
+                <div class="card"><div class="label">Year Total Rain</div><div class="value" id="rain-year-val" style="color: #e6a23c;">-- in</div></div>
             </div>
-        </div>
-        <div class="metric-card" style="background: #152238; border-color: #1d3557;">
-            <div class="label" style="color: #a8dadc;">Wind Speed</div>
-            <div class="value" id="meteo-wind" style="color: #4ea8de;">-- MPH</div>
-            <div id="wind-speed-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%; text-align: center;">
-                💨 Calculating wind conditions...
+            <!-- Rain Chart Canvas Element Container -->
+            <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+                <div id="rain-bar-chart"></div>
             </div>
-        </div>
-        <div class="metric-card" style="background: #152238; border-color: #1d3557;">
-            <div class="label" style="color: #a8dadc;">Cloud Cover</div>
-            <div class="value" id="meteo-clouds" style="color: #4ea8de;">-- %</div>
-        </div>
-        <!-- NEW DEDICATED REAL-TIME AQI DATA CARD -->
-        <div class="metric-card" style="background: #152238; border-color: #1d3557;">
-            <div class="label" style="color: #a8dadc;">Air Quality (AQI)</div>
-            <div class="value" id="meteo-aqi" style="color: #30d158;">--</div>
-            <div id="aqi-text-explainer" style="font-size: 0.65rem; color: #a8dadc; margin-top: auto; padding-top: 8px; width: 100%;">Good</div>
-        </div>
-    </div>
-    <!-- NEW LARGE ADVANCED OPEN-METEO DATA PANEL -->
-    <!-- <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌍 Advanced Regional Analytics</h2> -->
-    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
-        <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
-            <div class="label" style="color: #ff9f0a;">Apparent Temp (Feels Like)</div>
-            <div class="value" id="meteo-apparent" style="color: #ff9f0a;">-- °F</div>
-        </div>
-        <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
-            <div class="label" style="color: #30d158;">UV Index</div>
-            <div class="value" id="meteo-uv" style="color: #30d158;">--</div>
             
-            <!-- NEW LIVE UV INDEX EXPLAIER -->
-            <div id="uv-safety-explainer" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
-                🟢 Index: Calculating sun exposure safety...
+            <!-- NEW DEDICATED TEMPERATURE ANALYTICS PANEL -->
+            <h2 style="color: #f5f5f7; font-weight: 500;">🌡️ Temperature Analytics</h2>
+            <div class="card" style="margin-top: 20px;">
+                <div id="temp-timeline-chart"></div>
             </div>
-        </div>
-        <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
-            <div class="label" style="color: #64d2ff;">Dew Point</div>
-            <div class="value" id="meteo-dew" style="color: #64d2ff;">-- °F</div>
             
-            <!-- NEW LIVE COMFORT INDEX EXPLAINER -->
-            <div id="dew-comfort-explainer" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
-                🔵 Index: Calculating air comfort...
+            <!-- NEW DEDICATED BAROMETRIC PRESSURE ANALYTICS PANEL -->
+            <h2 style="color: #f5f5f7; font-weight: 500;">📉 Barometric Pressure Analytics</h2>
+            <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+                <div id="press-timeline-chart"></div>
             </div>
-        </div>
-
-        <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
-            <div class="label" style="color: #bf5af2;">Precipitation Probability</div>
-            <div class="value" id="meteo-pop" style="color: #bf5af2;">-- %</div>
-        </div>
-        <div class="metric-card" style="background: #152238; border-color: #3a3a3c;">
-            <div class="label" style="color: #ff453a;">Soil Temp (Surface 0-10cm)</div>
-            <div class="value" id="meteo-soil-temp" style="color: #ff453a;">-- °F</div>
             
-            <!-- NEW DYNAMIC GARDENER'S SEED GUIDE TRACKER -->
-            <div id="soil-planting-guide" style="font-size: 0.75rem; color: #8e8e93; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px; font-weight: 500;">
-                🌱 Guide: Waiting for temperature check...
+            <!-- NEW DEDICATED HUMIDITY ANALYTICS PANEL -->
+            <h2 style="color: #f5f5f7; font-weight: 500;">💧 Humidity Analytics</h2>
+            <div class="card" style="margin-top: 20px;">
+                <div id="humid-timeline-chart"></div>
             </div>
-        </div>
-        <div class="metric-card" style="background: #152238; border-color: #3a3a3c; position: relative;">
-            <div class="label" style="color: #0a84ff;">Soil Moisture (0-10cm)</div>
-            <div class="value" id="meteo-soil-moist" style="color: #0a84ff;">--%</div>
             
-            <!-- NEW COMPACT DYNAMIC VISUAL LEGEND -->
-            <div id="moisture-legend" style="display: flex; gap: 4px; justify-content: space-between; font-size: 0.65rem; margin-top: 12px; border-top: 1px solid #2a2a2a; padding-top: 8px;">
-                <span id="leg-vrydry" style="transition: all 0.3s;">🔴 None</span>
-                <span id="leg-dry" style="transition: all 0.3s;">🟠 Dry</span>
-                <span id="leg-mod" style="transition: all 0.3s;">🟡 Mod</span>
-                <span id="leg-mst" style="transition: all 0.3s;">🟢 Ideal</span>
-                <span id="leg-wet" style="transition: all 0.3s;">🔵 Wet</span>
-                <span id="leg-sat" style="transition: all 0.3s;">🟣 Sat</span>
+            <!-- NEW DEDICATED WIND SPEED ANALYTICS PANEL -->
+            <h2 style="color: #f5f5f7; font-weight: 500;">💨 Wind Speed Analytics</h2>
+            <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+                <div id="wind-speed-chart"></div>
+            </div>
+            
+            <!-- UPDATED: Chronological 5-Minute Wind Direction Timeline Panel -->
+            <h2 style="color: #f5f5f7; font-weight: 500;">🧭 Wind Direction History (5-Min Interval)</h2>
+            <!-- Wind Direction Chart Canvas Container -->
+            <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
+                <div id="wind-dir-timeline-chart"></div>
             </div>
         </div>
-    </div>
-    <!-- NEW DEDICATED 10-DAY ROLLING FORECAST BLOCK -->
-    <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">📅 10-Day Rolling Forecast</h2>
-    <div id="forecast-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 40px;">
-        <!-- JavaScript will dynamically inject all 10 forecast cards right here -->
-    </div>
-    
-    <h2>🌧️ Precipitation Analytics</h2>
-    <!-- Expanded Rain Grid containing your new Year Total Card -->
-    <div class="grid">
-        <div class="card"><div class="label">Rain (Last 5 Mins)</div><div class="value" id="rain-5min-val" style="color: #3399ff;">-- in</div></div>
-        <div class="card"><div class="label">Rain Total Today</div><div class="value" id="rain-today-val" style="color: #3399ff;">-- in</div></div>
-        <div class="card"><div class="label">Year Total Rain</div><div class="value" id="rain-year-val" style="color: #e6a23c;">-- in</div></div>
-    </div>
-    <!-- Rain Chart Canvas Element Container -->
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="rain-bar-chart"></div>
-    </div>
-    
-    <!-- NEW DEDICATED TEMPERATURE ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">🌡️ Temperature Analytics</h2>
-    <div class="card" style="margin-top: 20px;">
-        <div id="temp-timeline-chart"></div>
-    </div>
-
-    <!-- NEW DEDICATED BAROMETRIC PRESSURE ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">📉 Barometric Pressure Analytics</h2>
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="press-timeline-chart"></div>
-    </div>
-
-    <!-- NEW DEDICATED HUMIDITY ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">💧 Humidity Analytics</h2>
-    <div class="card" style="margin-top: 20px;">
-        <div id="humid-timeline-chart"></div>
-    </div>
-
-    <!-- NEW DEDICATED WIND SPEED ANALYTICS PANEL -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">💨 Wind Speed Analytics</h2>
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="wind-speed-chart"></div>
-    </div>
-
-    <!-- UPDATED: Chronological 5-Minute Wind Direction Timeline Panel -->
-    <h2 style="color: #f5f5f7; font-weight: 500;">🧭 Wind Direction History (5-Min Interval)</h2>
-    <!-- Wind Direction Chart Canvas Container -->
-    <div class="card" style="margin-top: 20px; margin-bottom: 40px;">
-        <div id="wind-dir-timeline-chart"></div>
-    </div>
-</div>
         
         <!-- WRAP YOUR ENTIRE WILDLIFE DATA VIEW HERE -->
         <div id="birds-section" class="hidden-section">
@@ -276,61 +284,83 @@
                 <!-- Leaflet map canvas anchoring element row auto sizing -->
                 <div id="bird-map" style="height: 450px; width: 100%; border-radius: 0px;"></div>
             </div>
-
+            
             <!-- NEW DEDICATED SIGHTING LOG PRINT GRIDS -->
             <h3 style="color: #f5f5f7; margin-top: 25px; font-weight: 500; padding-left: 20px;">📋 Active 2-Mile Observation Logs</h3>
             <div id="bird-cards-list" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 50px; padding: 0 20px; box-sizing: border-box;">
                 <!-- JavaScript will automatically print out all specific bird logs right here -->
             </div>
         </div>
-</div>
+
+        <!-- ==================================================================== -->
+        <div id="bird-info-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); z-index: 99999 !important; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+            <div style="background: #1c1c1e; border: 1px solid #2a2a2a; max-width: 500px; width: 100%; border-radius: 16px; overflow: hidden; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+                
+                <!-- Modal Close Action Anchor Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #2a2a2a; background: #121214;">
+                    <h3 id="modal-bird-name" style="margin: 0; color: #ffd60a; font-size: 1.2rem; font-weight: 700;">Bird Details</h3>
+                    <button onclick="closeBirdDetailModal()" style="background: #2a2a2a; color: #f5f5f7; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">✕ Close</button>
+                </div>
+
+                <!-- Dynamic Data Canvas Inner Shell -->
+                <div style="padding: 20px; overflow-y: auto; max-height: 70vh; display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Wikipedia Image Container -->
+                    <div id="modal-image-frame" style="width: 100%; height: 240px; border-radius: 10px; background: #121214; display: flex; justify-content: center; align-items: center; overflow: hidden; border: 1px solid #2a2a2a;">
+                        <img id="modal-bird-photo" src="" alt="Sighting Frame" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        <div id="modal-photo-loader" style="color: #8e8e93; font-size: 0.85rem;">🔍 Fetching Wikipedia Field Guide...</div>
+                    </div>
+
+                    <!-- Meta Descriptions -->
+                    <div style="font-size: 0.85rem; color: #f5f5f7; background: #121214; padding: 12px; border-radius: 8px; border: 1px solid #2a2a2a;">
+                        🧬 <strong style="color: #64d2ff;">Scientific Title:</strong> <span id="modal-bird-sci" style="font-style: italic;">None</span><br>
+                        📍 <strong style="color: #64d2ff;">Sighting Anchor:</strong> <span id="modal-bird-loc">None</span><br>
+                        📏 <strong style="color: #64d2ff;">Distance Bounds:</strong> <span id="modal-bird-dist">0.00</span> miles away
+                    </div>
+
+                    <!-- Wikipedia Text Summary -->
+                    <p id="modal-bird-summary" style="margin: 0; font-size: 0.85rem; color: #8e8e93; line-height: 1.5; text-align: justify;"></p>
+                </div>
+            </div>
+        </div>
+
         <!-- TAB SWITCHER INTERACTION LAYER -->
-    <script>
-        function switchDashboardTab(activeTab) {
-            const weatherSec = document.getElementById('weather-section');
-            const birdsSec = document.getElementById('birds-section');
-            const weatherBtn = document.getElementById('tab-weather');
-            const birdsBtn = document.getElementById('tab-birds');
-
-            // Force the page position straight back to the ceiling on every single switch
-            window.scrollTo(0, 0);
-
-            if (activeTab === 'weather') {
-                weatherSec.className = 'active-section';
-                birdsSec.className = 'hidden-section';
+        <script>
+            function switchDashboardTab(activeTab) {
+                const weatherSec = document.getElementById('weather-section');
+                const birdsSec = document.getElementById('birds-section');
+                const weatherBtn = document.getElementById('tab-weather');
+                const birdsBtn = document.getElementById('tab-birds');
                 
-                weatherBtn.style.background = '#0a84ff';
-                weatherBtn.style.color = '#ffffff';
-                birdsBtn.style.background = '#2a2a2a';
-                birdsBtn.style.color = '#8e8e93';
-            } else {
-                weatherSec.className = 'hidden-section';
-                birdsSec.className = 'active-section';
+                window.scrollTo(0, 0);
                 
-                birdsBtn.style.background = '#0a84ff';
-                birdsBtn.style.color = '#ffffff';
-                weatherBtn.style.background = '#2a2a2a';
-                weatherBtn.style.color = '#8e8e93';
-
-                // Give the browser a split second to paint the section, then trigger layout fixes
-                if (typeof birdMapInstance !== 'undefined' && birdMapInstance !== null) {
-                    setTimeout(() => {
-                        // 1. Force Leaflet to recalculate the container bounds
-                        birdMapInstance.invalidateSize();
-                        birdMapInstance.setView([43.1301, -89.4462], 13);
-                        
-                        // 2. === THE ULTIMATE FIX: Triggers a native window adjustment to snap the map wide ===
-                        window.dispatchEvent(new Event('resize'));
-                        // ==================================================================================
-                    }, 100);
+                if (activeTab === 'weather') {
+                    weatherSec.className = 'active-section';
+                    birdsSec.className = 'hidden-section';
+                    
+                    weatherBtn.style.background = '#0a84ff';
+                    weatherBtn.style.color = '#ffffff';
+                    birdsBtn.style.background = '#2a2a2a';
+                    birdsBtn.style.color = '#8e8e93';
+                } else {
+                    weatherSec.className = 'hidden-section';
+                    birdsSec.className = 'active-section';
+                    
+                    birdsBtn.style.background = '#0a84ff';
+                    birdsBtn.style.color = '#ffffff';
+                    weatherBtn.style.background = '#2a2a2a';
+                    weatherBtn.style.color = '#8e8e93';
+                    
+                    if (typeof birdMapInstance !== 'undefined' && birdMapInstance !== null) {
+                        setTimeout(() => {
+                            birdMapInstance.invalidateSize();
+                            birdMapInstance.setView([43.1301, -89.4462], 13);
+                            window.dispatchEvent(new Event('resize'));
+                        }, 100);
+                    }
                 }
             }
-        }
-    </script>
-    <script src="app.js"></script>
-</body>
-</body>
-</html>
-
-
+        </script>
+        <script src="app.js"></script>
+    </body>
+    </html>
 
