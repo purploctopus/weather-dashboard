@@ -702,8 +702,19 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!rawSpeciesList) return;
 
 
-            // === ALL FILTERS REMOVED: Pass 100% of the raw eBird array data cleanly ===
-            const speciesList = rawSpeciesList;
+            // === 1. FILTER LOGIC REPLACES THE RAW ASSIGNMENT ===
+            const speciesList = rawSpeciesList.filter(bird => {
+                // If it is an absolute favorite, always keep it
+                if (FAVORITE_BIRDS.includes(bird.speciesCode)) {
+                    return true;
+                }
+                // If it is a common resident, filter it out
+                if (COMMON_MADISON_RESIDENTS.includes(bird.speciesCode)) {
+                    return false;
+                }
+                // Keep everything else
+                return true;
+            });
 
             // Set up home baseline coordinate metrics
             //43.130180900406934, -89.44622950212249
@@ -751,18 +762,21 @@ document.addEventListener("DOMContentLoaded", function() {
                 const jitterLat = bird.lat + (Math.random() - 0.5) * 0.0015;
                 const jitterLng = bird.lng + (Math.random() - 0.5) * 0.0015;
 
-                // Safe fallback marker icon configuration
+                // Check if this specific bird in the loop is a favorite
+                const isFav = FAVORITE_BIRDS.includes(bird.speciesCode);
+
+                // === 2. DYNAMIC PIN ICON BASED ON FAVORITE STATUS ===
                 const birdIcon = L.divIcon({
-                    html: `<div style="font-size: 22px; cursor: pointer; text-shadow: 0 0 3px #000;">🦩</div>`,
+                    html: `<div style="font-size: 22px; cursor: pointer; text-shadow: 0 0 3px #000;">${isFav ? '⭐' : '🦩'}</div>`,
                     className: 'transient-bird-pin',
                     iconSize:[24, 24],
                     iconAnchor: [12, 12]
                 });
 
-                // Set up the dark map popup cards layout
+                // Set up the dark map popup cards layout (Prepended star to title if favorite)
                 const popupContent = `
                     <div style="font-family: sans-serif; color: #333; line-height: 1.4; min-width: 160px;">
-                        <strong style="font-size: 1rem; color: #d90429;">${bird.comName}</strong><br>
+                        <strong style="font-size: 1rem; color: #d90429;">${isFav ? '⭐ ' : ''}${bird.comName}</strong><br>
                         <span style="font-style: italic; font-size: 0.8rem; color: #666;">${bird.sciName}</span><br>
                         <hr style="border: 0; border-top: 1px solid #ddd; margin: 6px 0;">
                         👥 <strong>Count:</strong> ${bird.howMany || "1"}<br>
@@ -777,10 +791,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     .addTo(birdMapInstance)
                     .bindPopup(popupContent);
 
-                // B. Compile and Append the Matching Text Card Item String Below the Map Canvas
+                // === 3. DYNAMIC CARD LAYOUT (Prepended star to title if favorite) ===
                 cardsHtml += `
                     <div class="bird-data-card" style="background: #1c1c1e; border-color: #2a2a2a; justify-content: flex-start; padding: 15px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box;">
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #ffd60a; margin-bottom: 2px;">${bird.comName}</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #ffd60a; margin-bottom: 2px;">${isFav ? '⭐ ' : ''}${bird.comName}</div>
                         <div style="font-size: 0.75rem; font-style: italic; color: #8e8e93; margin-bottom: 10px;">${bird.sciName}</div>
                         <div style="font-size: 1.6rem; font-weight: 800; color: #64d2ff; margin-bottom: 6px;">Seen: ${bird.howMany || "1"}</div>
                         
