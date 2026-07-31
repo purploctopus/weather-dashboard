@@ -692,7 +692,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Initialize a global map variable tracking instance to prevent duplicate allocation drops
     let birdMapInstance = null;
-
+    let birdClusterGroup = null;
     async function fetchLocalBirdSightings() {
         try {
             const response = await fetch(EBIRD_API_URL, {
@@ -701,79 +701,74 @@ document.addEventListener("DOMContentLoaded", function() {
             const rawSpeciesList = await response.json();
             if (!rawSpeciesList) return;
 
-
-            // === 1. FILTER LOGIC REPLACES THE RAW ASSIGNMENT ===
+            // Restore your exact regional migration sieve filters
             const speciesList = rawSpeciesList.filter(bird => {
-                // If it is an absolute favorite, always keep it
-                if (FAVORITE_BIRDS.includes(bird.speciesCode)) {
+                if (typeof FAVORITE_BIRDS !== 'undefined' && FAVORITE_BIRDS.includes(bird.speciesCode)) {
                     return true;
                 }
-                // If it is a common resident, filter it out
-                if (COMMON_MADISON_RESIDENTS.includes(bird.speciesCode)) {
+                if (typeof COMMON_MADISON_RESIDENTS !== 'undefined' && COMMON_MADISON_RESIDENTS.includes(bird.speciesCode)) {
                     return false;
                 }
-                // Keep everything else
                 return true;
             });
 
-            // Set up home baseline coordinate metrics
-            //43.130180900406934, -89.44622950212249
+            // Exact backyard Westport coordinates anchor
             const homeLat = 43.1301;
             const homeLng = -89.4462;
 
-            // 1. If the map tracking instance doesn't exist yet, build it cleanly on your canvas row
+            // 1. Initialize Leaflet map instance centered over your real location
             if (!birdMapInstance) {
-               // birdMapInstance = L.map('bird-map').setView([homeLat, homeLng], 13);
-                // === FIX: Forces Leaflet's engine to track responsive width dimensions from the split second it boots ===
                 birdMapInstance = L.map('bird-map', { trackResize: true }).setView([homeLat, homeLng], 14);
+                
+                // CORRECTED: maxZoom is clamped to 18 to fix the un-rendered gray tiles issue
                 L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-                    maxZoom: 100
+                    maxZoom: 18
                 }).addTo(birdMapInstance);
 
-                // 2. Drop a distinct high-contrast pulsing anchor pin directly over your house roof line
+                // House Anchor Marker Setup
                 const homeIcon = L.divIcon({
                     html: `<div style="font-size: 24px; text-shadow: 0 0 4px #000;">🏠</div>`,
                     className: 'custom-home-pin',
-                    iconSize: [24, 24],       // ✅ FIXED: Explicit pixel dimensions
-                    iconAnchor: [12, 12]    // ✅ FIXED: Centers the pin perfectly
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
                 });
                 L.marker([homeLat, homeLng], { icon: homeIcon }).addTo(birdMapInstance)
-                    .bindPopup(`<strong style="color: #00ffcc;">Garden Weather Station</strong><br>Your backyard baseline center anchor.`);
-            } else {
-                // If the map is already built, clear out transient bird markers from the previous data loop
-                birdMapInstance.eachLayer((layer) => {
-                    if (layer instanceof L.Marker && !layer.options.icon.options.className.includes('custom-home-pin')) {
-                        birdMapInstance.removeLayer(layer);
-                    }
-                });
+                    .bindPopup(`<strong>Our Weather Station</strong><br>Backyard center anchor.`);
             }
 
-            // === 100% CLEAN CRASH-PROOF COMPILER LOOP ===
+            // 2. Clear out previous data cycle layers safely
+            if (typeof birdClusterGroup !== 'undefined' && birdClusterGroup !== null) {
+                birdMapInstance.removeLayer(birdClusterGroup);
+            }
+
+            // Initialize a completely fresh cluster group instance
+            birdClusterGroup = L.markerClusterGroup({
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true
+            });
+
             let cardsHtml = "";
 
+            // Loop through sightings to build map markers and print text logs together
             speciesList.slice(0, 50).forEach(bird => {
                 const obsDate = new Date(bird.obsDt);
                 const timeString = obsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
                                    " at " + obsDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 
                 const distance = calculateDistanceInMiles(homeLat, homeLng, bird.lat, bird.lng);
-                
-                const jitterLat = bird.lat + (Math.random() - 0.5) * 0.0015;
-                const jitterLng = bird.lng + (Math.random() - 0.5) * 0.0015;
+                const isFav = typeof FAVORITE_BIRDS !== 'undefined' && FAVORITE_BIRDS.includes(bird.speciesCode);
+                const markerEmoji = isFav ? "⭐" : "🦩";
 
-                // Check if this specific bird in the loop is a favorite
-                const isFav = FAVORITE_BIRDS.includes(bird.speciesCode);
-
-                // === 2. DYNAMIC PIN ICON BASED ON FAVORITE STATUS ===
+                // HARDCODED INDEPENDENT PIN OPTIONS (Completely typo-proof)
                 const birdIcon = L.divIcon({
-                    html: `<div style="font-size: 22px; cursor: pointer; text-shadow: 0 0 3px #000;">${isFav ? '⭐' : '🦩'}</div>`,
+                    html: `<div style="font-size: 22px; cursor: pointer; text-shadow: 0 0 3px #000;">${markerEmoji}</div>`,
                     className: 'transient-bird-pin',
-                    iconSize:[24, 24],
+                    iconSize: [24, 24],
                     iconAnchor: [12, 12]
                 });
 
-                // Set up the dark map popup cards layout (Prepended star to title if favorite)
                 const popupContent = `
                     <div style="font-family: sans-serif; color: #333; line-height: 1.4; min-width: 160px;">
                         <strong style="font-size: 1rem; color: #d90429;">${isFav ? '⭐ ' : ''}${bird.comName}</strong><br>
@@ -786,12 +781,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     </div>
                 `;
 
-                // A. Drop the Pin onto the Leaflet Canvas Map Layer Safely
-                L.marker([jitterLat, jitterLng], { icon: birdIcon })
-                    .addTo(birdMapInstance)
-                    .bindPopup(popupContent);
+                const birdMarker = L.marker([bird.lat, bird.lng], { icon: birdIcon }).bindPopup(popupContent);
+                birdClusterGroup.addLayer(birdMarker);
 
-                // === 3. DYNAMIC CARD LAYOUT (Prepended star to title if favorite) ===
+                // B. Compile and Append the Matching Text Card Item String Below the Map Canvas
                 cardsHtml += `
                     <div class="bird-data-card" style="background: #1c1c1e; border-color: #2a2a2a; justify-content: flex-start; padding: 15px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box;">
                         <div style="font-size: 1.1rem; font-weight: 700; color: #ffd60a; margin-bottom: 2px;">${isFav ? '⭐ ' : ''}${bird.comName}</div>
@@ -804,10 +797,12 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                     </div>
                 `;
-
             });
 
-            // C. Batch inject all compiled printed cards into your index layout placeholder elements
+            // Add the populated cluster instance to the active viewport map canvas
+            birdMapInstance.addLayer(birdClusterGroup);
+
+            // Inject the text card matrix elements right into your HTML placeholder
             const listContainer = document.getElementById('bird-cards-list');
             if (listContainer) {
                 listContainer.innerHTML = cardsHtml;
