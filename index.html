@@ -110,9 +110,28 @@
         </div>
         <div id="weather-section" class="active-section">
             <h1>🏡 Myers Clary Weather Station 📡</h1>
-            <!-- Main Conditions Grid -->
-            <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🫜 Garden Weather</h2>
-            <div class="grid">
+            <!-- Main Conditions Grid Header Wrap Row -->
+            <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; margin-top: 40px; border-bottom: 1px solid #2a2a2a; padding-bottom: 10px;">
+                <h2 style="color: #f5f5f7; margin: 0; font-weight: 500;">🫜 Garden Weather</h2>
+                
+                <!-- INLINE BATTERY FUEL INDICATOR EMBED MODULE -->
+                <div style="display: flex; align-items: center; gap: 8px; background: #1c1c1e; border: 1px solid #2a2a2a; padding: 4px 10px; border-radius: 8px; height: 26px; box-sizing: border-box;">
+                    <!-- Graphical Inner Bar Shell -->
+                    <div style="width: 32px; height: 14px; border: 1.5px solid #8e8e93; border-radius: 3px; padding: 1.5px; position: relative; display: flex; align-items: center; background: #121214;">
+                        <!-- Dynamic Color Filling Inner Bar -->
+                        <div id="dashboard-battery-bar" style="width: 100%; height: 100%; background: #30d158; border-radius: 1px; transition: width 0.5s ease, background-color 0.5s ease;"></div>
+                        <!-- Outer Nipple Node Cap -->
+                        <div style="width: 2px; height: 5px; background: #8e8e93; border-radius: 0 1px 1px 0; position: absolute; right: -4px; top: 3px;"></div>
+                    </div>
+                    
+                    <!-- Live Number Value Output Display Fields -->
+                    <span id="dashboard-battery-volts" style="font-size: 0.85rem; font-weight: 800; color: #f5f5f7; font-family: monospace;">--V</span>
+                    <span id="dashboard-battery-status" style="font-size: 0.8rem; font-weight: 700; color: #30d158; font-family: sans-serif; white-space: nowrap;">--%</span>
+                </div>
+            </div>
+
+            <!-- Cleaned-up 6-Card Uniform Grid Deck Column Canvas -->
+            <div class="grid" style="margin-top: 20px;">
                 <div class="metric-card" style="background: #0a2e1a; border-color: #1d3557;">
                     <div class="label">Temperature</div>
                     <div class="value" id="temp-val">-- °F</div>
@@ -138,6 +157,7 @@
                     <div class="value" id="dir-val">--</div>
                 </div>
             </div>
+
             <!-- DEDICATED REGIONAL METEO FORECAST GRID -->
             <h2 style="color: #f5f5f7; margin-top: 40px; font-weight: 500;">🌐 Regional Weather</h2>
             <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">

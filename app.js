@@ -646,7 +646,50 @@ document.addEventListener("DOMContentLoaded", function() {
                 { data: windSpeedTimelinePoints }  // Series 1: Average Wind Speed
             ]);
             windDirChart.updateSeries([{ data: windDirTimelinePoints }]);
+
+            // ===================================================================================
+            // 🔋 DYNAMIC BATTERY POWER FUEL GAUGE PROCESSING LAYER (LITHIUM AA PROFILE)
+            // ===================================================================================
+            // Extract the voltage value securely from your live JSON snapshot object
+            const batteryVolts = parseFloat(currentData.battery_voltage || currentData.battery || 6.0);
+            
+            // Update the text text box value inside your index.html container card
+            const voltsTextEl = document.getElementById('dashboard-battery-volts');
+            if (voltsTextEl) {
+                voltsTextEl.textContent = `${batteryVolts.toFixed(2)}V`;
+            }
+
+            // ✅ FIXED FOR LITHIUM AAs: Full pack sits at 6.4V, stable floor sits at 4.6V
+            // Lithium drops hard at the finish line, so 4.6V is your strict safety swap margin!
+            let batteryPct = Math.round(((batteryVolts - 4.6) / (6.4 - 4.6)) * 100);
+            if (batteryPct > 100) batteryPct = 100;
+            if (batteryPct < 0)   batteryPct = 0;
+
+            // Dynamically scale the width and background color of your visual battery graphic bar
+            const barEl = document.getElementById('dashboard-battery-bar');
+            const statusEl = document.getElementById('dashboard-battery-status');
+            
+            if (barEl && statusEl) {
+                barEl.style.width = `${batteryPct}%`;
+                statusEl.textContent = `Power: ${batteryPct}%`;
+
+                // Shift accent color modes based on depletion depth layers
+                if (batteryPct > 40) {
+                    barEl.style.backgroundColor = '#30d158'; // Emerald Green (Healthy Status)
+                    statusEl.style.color = '#30d158';
+                } else if (batteryPct > 15) {
+                    barEl.style.backgroundColor = '#ff9f0a'; // Amber Orange (Low Power Alert)
+                    statusEl.style.color = '#ff9f0a';
+                } else {
+                    barEl.style.backgroundColor = '#ff453a'; // Crimson Red (Critical Warning)
+                    statusEl.style.color = '#ff453a';
+                }
+            }
+            // ===================================================================================
+
             const calculatedYearlyRain = await loadPrecipitationAnalytics();
+            
+            // This is the line right at the very floor of your pipeline
             updateDashboardUI(currentData, calculatedDailyRain, calculatedYearlyRain);
 
         } catch (error) {
