@@ -506,15 +506,34 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!current) return;
         const pressureInHg = current.pressure ? current.pressure * 0.0295301 : null;
 
-        document.getElementById('temp-val').innerText = `${formatMetric(current.temperature, 1)} °F`;
-        document.getElementById('humid-val').innerText = `${formatMetric(current.humidity, 1)} %`;
-        document.getElementById('press-val').innerText = `${formatMetric(pressureInHg, 2)} inHg`;
+        // 1. SANITIZE FAULT DATA: If a sensor reports exactly 999.0, lock it to "--" on the dashboard cards
+        const cleanTemp = Number(current.temperature) >= 990 ? "--" : `${formatMetric(current.temperature, 1)} °F`;
+        const cleanHumid = Number(current.humidity) >= 990 ? "--" : `${formatMetric(current.humidity, 1)} %`;
+        
+        // ✅ FIXED: Changed threshold from >= 900 to >= 999 so it only filters actual fault codes and lets 982 hPa pass through!
+        const cleanPress = Number(current.pressure) >= 999 ? "--" : `${formatMetric(pressureInHg, 2)} inHg`;
+
+        // 2. Map clean values straight to your HTML text display placeholders
+        document.getElementById('temp-val').innerText = cleanTemp;
+        document.getElementById('humid-val').innerText = cleanHumid;
+        document.getElementById('press-val').innerText = cleanPress;
+        
         document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
         document.getElementById('gust-val').innerText = `${formatMetric(current.wind_gust, 1)} MPH`;
-        document.getElementById('dir-val').innerText = current.wind_dir || "--";
+        
         document.getElementById('rain-5min-val').innerText = `${formatMetric(current.rain_last_5_min, 3)} in`;
         document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
         document.getElementById('rain-year-val').innerText = `${formatMetric(yearlyRainTotal, 3)} in`;
+
+        // 3. HARDWARE WARNING CHECK: Flashes an orange warning badge if the wind direction line is disconnected
+        const dirValEl = document.getElementById('dir-val');
+        if (dirValEl) {
+            if (current.wind_dir === "OFFLINE" || current.wind_dir === "ERR") {
+                dirValEl.innerHTML = `<span style="color: #ff9f0a; font-size: 1.1rem; font-weight: 700;">⚠️ OFFLINE</span>`;
+            } else {
+                dirValEl.innerText = current.wind_dir || "--";
+            }
+        }
     }
 
     // 5. Precipitation Database Mining Loop
