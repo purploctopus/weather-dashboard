@@ -667,10 +667,10 @@ document.addEventListener("DOMContentLoaded", function() {
             windDirChart.updateSeries([{ data: windDirTimelinePoints }]);
 
             // ===================================================================================
-            // 🔋 DYNAMIC BATTERY POWER FUEL GAUGE PROCESSING LAYER (LITHIUM AA PROFILE)
+            // 🔋 DYNAMIC BATTERY POWER FUEL GAUGE PROCESSING LAYER
             // ===================================================================================
             // Extract the voltage value securely from your live JSON snapshot object
-            const batteryVolts = parseFloat(currentData.battery_voltage || currentData.battery || 6.0);
+            const batteryVolts = parseFloat(currentData.battery_voltage || currentData.battery || 4.8);
             
             // Update the text text box value inside your index.html container card
             const voltsTextEl = document.getElementById('dashboard-battery-volts');
@@ -678,9 +678,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 voltsTextEl.textContent = `${batteryVolts.toFixed(2)}V`;
             }
 
-            // ✅ FIXED FOR LITHIUM AAs: Full pack sits at 6.4V, stable floor sits at 4.6V
-            // Lithium drops hard at the finish line, so 4.6V is your strict safety swap margin!
-            let batteryPct = Math.round(((batteryVolts - 4.6) / (6.4 - 4.6)) * 100);
+            // Calculate the capacity percentage based on NiMH discharge boundaries (5.4V down to 4.2V)
+            let batteryPct = Math.round(((batteryVolts - 4.2) / (5.4 - 4.2)) * 100);
             if (batteryPct > 100) batteryPct = 100;
             if (batteryPct < 0)   batteryPct = 0;
 
