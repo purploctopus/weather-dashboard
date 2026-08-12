@@ -679,7 +679,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             // Calculate the capacity percentage based on NiMH discharge boundaries (5.4V down to 4.2V)
-            let batteryPct = Math.round(((batteryVolts - 4.2) / (5.1 - 4.2)) * 100);
+            let batteryPct = Math.round(((batteryVolts - 4) / (5.4 - 4)) * 100);
             if (batteryPct > 100) batteryPct = 100;
             if (batteryPct < 0)   batteryPct = 0;
 
