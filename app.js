@@ -521,7 +521,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('wind-val').innerText = `${formatMetric(current.wind_speed, 1)} MPH`;
         document.getElementById('gust-val').innerText = `${formatMetric(current.wind_gust, 1)} MPH`;
         
-        document.getElementById('rain-5min-val').innerText = `${formatMetric(current.rain_last_5_min, 3)} in`;
+        document.getElementById('rain-5min-val').innerText = `${formatMetric(current.rain_last_10_min, 3)} in`;
         document.getElementById('rain-today-val').innerText = `${formatMetric(dailyRainTotal, 3)} in`;
         document.getElementById('rain-year-val').innerText = `${formatMetric(yearlyRainTotal, 3)} in`;
 
@@ -553,7 +553,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     if (dateKey.startsWith(currentYearPrefix)) {
                         let daySum = 0.0;
                         Object.values(fullHistory[dateKey]).forEach(row => {
-                            const tip = row.rain_last_5_min !== undefined ? Number(row.rain_last_5_min) : Number(row.rain_fall);
+                            const tip = row.rain_last_10_min !== undefined ? Number(row.rain_last_10_min) : Number(row.rain_fall);
                             if (!isNaN(tip)) daySum += tip;
                         });
                         aggregatedYearTotal += daySum;
@@ -618,7 +618,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const logRow = historyData[timeKey];
                     if (!logRow) return;
 
-                    const tip = logRow.rain_last_5_min !== undefined ? Number(logRow.rain_last_5_min) : Number(logRow.rain_fall);
+                    const tip = logRow.rain_last_10_min !== undefined ? Number(logRow.rain_last_10_min) : Number(logRow.rain_fall);
                     calculatedDailyRain += (isNaN(tip) ? 0 : tip);
 
                     const paddedTimeKey = timeKey.padStart(6, '0');
